@@ -64,13 +64,14 @@ async function cloneEmojiToGuild(emojiId: string, emojiName: string, animated: b
         reader.onloadend = async () => {
             const base64data = reader.result as string;
 
-            const { createGuildEmoji } = findByProps("createGuildEmoji") || {};
-            if (createGuildEmoji) {
+            const { uploadEmoji } = findByProps("uploadEmoji", "deleteEmoji", "updateEmoji") || {};
+            if (typeof uploadEmoji === "function") {
                 try {
-                    await createGuildEmoji({
+                    await uploadEmoji({
                         guildId,
-                        name: emojiName,
                         image: base64data,
+                        name: emojiName,
+                        roles: [],
                     });
                     showToast(`Cloned ${emojiName} to server!`);
                 } catch (err: any) {

@@ -1,4 +1,4 @@
-import { LegacyAlert, LegacyFormInput } from "@metro/common/components";
+import { AlertActionButton, AlertActions, AlertModal, LegacyFormInput } from "@metro/common/components";
 import { findByPropsLazy } from "@metro/wrappers";
 
 const Alerts = findByPropsLazy("openLazy", "close");
@@ -29,16 +29,9 @@ export default function InputAlert({ title, confirmText, confirmColor, onConfirm
     }
 
     return (
-        <LegacyAlert
+        <AlertModal
             title={title}
-            confirmText={confirmText}
-            confirmColor={confirmColor}
-            isConfirmButtonDisabled={error.length !== 0}
-            onConfirm={onConfirmWrapper}
-            cancelText={cancelText}
-            onCancel={() => Alerts.close()}
-        >
-            <LegacyFormInput
+            content={<LegacyFormInput
                 placeholder={placeholder}
                 value={value}
                 onChange={(v: string | { text: string; }) => {
@@ -52,7 +45,16 @@ export default function InputAlert({ title, confirmText, confirmColor, onConfirm
                 autoFocus={true}
                 showBorder={true}
                 style={{ alignSelf: "stretch" }}
-            />
-        </LegacyAlert>
+            />}
+            actions={<AlertActions>
+                <AlertActionButton text={cancelText ?? "Cancel"} variant="secondary" />
+                <AlertActionButton
+                    text={confirmText ?? "Confirm"}
+                    variant={confirmColor === "red" ? "destructive" : "primary"}
+                    disabled={error.length !== 0}
+                    onPress={onConfirmWrapper}
+                />
+            </AlertActions>}
+        />
     );
 }

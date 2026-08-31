@@ -38,77 +38,15 @@ export default definePlugin({
         if (videoCallAsset === undefined) videoCallAsset = videoAsset2;
         if (voiceCallAsset === undefined) voiceCallAsset = callAsset2;
 
-        const UserProfileActions = findByName("UserProfileActions", false);
-        let SimplifiedUserProfileContactButtons = findByName(
-            "SimplifiedUserProfileContactButtons",
-            false,
-        );
-        if (SimplifiedUserProfileContactButtons === undefined)
-            SimplifiedUserProfileContactButtons = findByName(
-                "UserProfileContactButtons",
-                false,
-            );
+        const UserProfileContactButtons = findByName("UserProfileContactButtons", false);
         const PrivateChannelButtons = find(
             x => x?.type?.name === "PrivateChannelButtons",
         );
         const VideoButton = findByName("VideoButton", false);
-        // User Profile
-        if (UserProfileActions !== undefined) {
-            patches.push(
-                after("default", UserProfileActions, (_, component) => {
-                    if (
-                        !hidecallbuttonsSettings.upHideVideoButton &&
-                        !hidecallbuttonsSettings.upHideVoiceButton
-                    )
-                        return;
-
-                    let buttons =
-                        component?.props?.children?.props?.children[1]?.props
-                            ?.children;
-                    if (buttons === undefined)
-                        buttons =
-                            component?.props?.children[1]?.props?.children;
-                    if (buttons?.props?.children !== undefined)
-                        buttons = buttons?.props?.children;
-                    if (buttons === undefined) return;
-
-                    for (const idx in buttons) {
-                        const button = buttons[idx];
-                        if (button?.props?.children !== undefined) {
-                            const buttonContainer = button?.props?.children;
-                            for (const idx2 in buttonContainer) {
-                                const btn = buttonContainer[idx2];
-                                if (
-                                    (btn?.props?.icon === voiceCallAsset &&
-                                        hidecallbuttonsSettings.upHideVoiceButton) ||
-                                    (btn?.props?.icon === videoCallAsset &&
-                                        hidecallbuttonsSettings.upHideVideoButton)
-                                )
-                                    delete buttonContainer[idx2];
-                            }
-                        }
-                        if (button?.props?.IconComponent !== undefined) {
-                            if (hidecallbuttonsSettings.upHideVoiceButton)
-                                delete buttons[1];
-                            if (hidecallbuttonsSettings.upHideVideoButton)
-                                delete buttons[2];
-                        }
-                        if (
-                            (button?.props?.icon === voiceCallAsset &&
-                                hidecallbuttonsSettings.upHideVoiceButton) ||
-                            (button?.props?.icon === videoCallAsset &&
-                                hidecallbuttonsSettings.upHideVideoButton)
-                        )
-                            delete buttons[idx];
-                    }
-                }),
-            );
-        }
-        // Simplified user profile
-        patches.push(
+        if (UserProfileContactButtons) patches.push(
             after(
                 "default",
-                SimplifiedUserProfileContactButtons,
+                UserProfileContactButtons,
                 (_, component) => {
                     const buttons = component?.props?.children;
                     if (buttons === undefined) return;

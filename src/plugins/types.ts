@@ -6,7 +6,7 @@ export interface rainPlugin {
     id: string;
     version: string;
     author: developer[];
-    platforms?: ["android" | "ios"];
+    platforms?: ("android" | "ios")[];
     predicates?: (() => boolean)[];
     requiresRestart?: boolean;
     start?: () => void;

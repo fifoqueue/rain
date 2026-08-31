@@ -6,19 +6,12 @@ import { ChannelStore, GuildStore } from "@metro/common/stores";
 import getTag, { BUILT_IN_TAGS } from "../lib/getTag";
 
 const DisplayName = findByName("DisplayName", false);
-const HeaderName = findByName("HeaderName", false);
 
 const TagModule = findByProps("getBotLabel");
 const getBotLabel = TagModule?.getBotLabel;
 
 export default () => {
     const patches: any[] = [];
-
-    if (HeaderName) {
-        patches.push(after("default", HeaderName, ([{ channelId }]: any, ret: any) => {
-            ret.props.channelId = channelId;
-        }));
-    }
 
     if (DisplayName) {
         patches.push(after("default", DisplayName, ([{ guildId, channelId, user }]: any, ret: any) => {

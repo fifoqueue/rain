@@ -1,7 +1,10 @@
 import { after } from "@api/patcher";
-import { findByProps } from "@metro";
+import { findByFilePath, findByProps } from "@metro";
 
 import { customEffects, userEffectData,userEffects } from "./effects";
+
+const ProfileEffects = findByProps("getProfileEffects", "getProfileEffectsFromCategories");
+const UseProfileEffect = findByFilePath("modules/collectibles/profile_effects/useProfileEffect.tsx");
 
 export const patchGetUserProfile = () =>
     after("getUserProfile", findByProps("getUserProfile"), (_args: unknown[], profile: any | undefined) => {
@@ -15,14 +18,14 @@ export const patchGetUserProfile = () =>
     });
 
 export const patchGetAllProfileEffects = () =>
-    after("getAllProfileEffects", findByProps("getProfileEffect"), (_args: unknown[], effects: any[]) => {
-        effects.push(...Object.values(customEffects));
-        effects.push(...userEffects);
+    after("getProfileEffects", ProfileEffects, (_args: unknown[], effects: any[]) => {
+        const known = new Set(effects.map(effect => effect.skuId));
+        effects.push(...[...Object.values(customEffects), ...userEffects].filter(effect => !known.has(effect.skuId)));
         return effects;
     });
 
 export const patchGetProfileEffect = () =>
-    after("getProfileEffect", findByProps("getProfileEffect"), (args: unknown[], effect: any | undefined) => {
+    after("default", UseProfileEffect, (args: unknown[], effect: any | undefined) => {
         if (effect) return effect;
         const id = args[0] as string;
 

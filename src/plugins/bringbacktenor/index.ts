@@ -159,13 +159,6 @@ export default definePlugin({
             return;
         }
 
-        const ProviderConfig = findByProps("getProviderForAPIRequest");
-        if (ProviderConfig) {
-            patches.push(
-                instead("getProviderForAPIRequest", ProviderConfig, () => "tenor"),
-            );
-        }
-
         patches.push(
             instead("get", httpModule.HTTP, (args: any[], orig: Function) => {
                 const opts = args[0];

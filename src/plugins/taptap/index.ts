@@ -49,16 +49,9 @@ function openKeyboard(channelId: string) {
             ChatInputRef?.openSystemKeyboard();
             return;
         }
-        const keyboardModule = findByProps(
-            "openSystemKeyboard",
-            "openSystemKeyboardForLastCreatedInput",
-        );
+        const keyboardModule = findByProps("openSystemKeyboard");
         if (keyboardModule?.openSystemKeyboard) {
             keyboardModule.openSystemKeyboard();
-            return;
-        }
-        if (keyboardModule?.openSystemKeyboardForLastCreatedInput) {
-            keyboardModule.openSystemKeyboardForLastCreatedInput();
             return;
         }
 

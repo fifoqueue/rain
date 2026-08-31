@@ -2,8 +2,6 @@ import { NativeFileModule } from "@api/native/modules";
 import { logger } from "@lib/utils/logger";
 import { findByProps } from "@metro";
 
-import { CANVAS_CONFIG } from "./quote";
-
 interface ParsedDataUrl {
     body: string;
     isBase64: boolean;
@@ -46,53 +44,9 @@ function getApiBase(): string {
 }
 
 /**
- * Legacy path: Discord's internal attachment pipeline. Removed from current
- * mobile builds, so this is only attempted when the module still exists.
- */
-async function sendViaUploadLocalFiles(channelId: string, uri: string, filename: string, mime: string): Promise<boolean> {
-    const uploadModule = findByProps("uploadLocalFiles");
-    if (typeof uploadModule?.uploadLocalFiles !== "function") return false;
-
-    await uploadModule.uploadLocalFiles({
-        channelId,
-        items: [
-            {
-                id: "0",
-                item: {
-                    uri,
-                    originalUri: uri,
-                    mimeType: mime,
-                    filename,
-                    width: CANVAS_CONFIG.width,
-                    height: CANVAS_CONFIG.height,
-                    platform: 1,
-                },
-                isImage: true,
-                isVideo: false,
-                isClip: false,
-                isThumbnail: false,
-                origin: 1,
-                mimeType: mime,
-                filename,
-            },
-        ],
-        parsedMessage: {
-            content: "",
-            channel_id: channelId,
-            tts: false,
-            invalidEmojis: [],
-            validNonShortcutEmojis: [],
-        },
-    });
-
-    return true;
-}
-
-/**
- * Fallback path: post the message with the file straight to Discord's own
- * REST API as multipart form data. Uses the same React Native FormData file
- * part mechanism as the client's other uploads, just no internal upload
- * module involved. Still first-party only — the file goes to Discord's CDN.
+ * Posts the message with the file straight to Discord's own REST API as
+ * multipart form data. Uses React Native's FormData file part mechanism and
+ * keeps the upload first-party: the file goes only to Discord's CDN.
  */
 async function sendViaRestApi(channelId: string, uri: string, filename: string, mime: string): Promise<void> {
     const token = findByProps("getToken")?.getToken?.();
@@ -136,17 +90,6 @@ async function sendViaRestApi(channelId: string, uri: string, filename: string, 
     }
 }
 
-async function dispatchQuoteFile(channelId: string, uri: string, filename: string, mime: string): Promise<"legacy" | "rest"> {
-    try {
-        if (await sendViaUploadLocalFiles(channelId, uri, filename, mime)) return "legacy";
-    } catch (error) {
-        logger.warn("[Quoter] uploadLocalFiles failed, falling back to REST upload:", error);
-    }
-
-    await sendViaRestApi(channelId, uri, filename, mime);
-    return "rest";
-}
-
 /**
  * Sends a rendered quote data URL as a native Discord attachment: writes the
  * PNG to the app cache and hands it to Discord — no third-party host is
@@ -166,13 +109,10 @@ export async function sendQuoteAttachment(channelId: string, dataUrl: string, fi
     const filePath = await NativeFileModule.writeFile("cache", tempPath, parsed.body, "base64");
     const uri = String(filePath).startsWith("file://") ? String(filePath) : `file://${filePath}`;
 
-    let sendPath: "legacy" | "rest" | null = null;
     try {
-        sendPath = await dispatchQuoteFile(channelId, uri, filename, parsed.mime);
+        await sendViaRestApi(channelId, uri, filename, parsed.mime);
     } finally {
-        // The REST response only resolves after Discord has consumed the
-        // body, so a short delay suffices; the legacy pipeline reads the
-        // file on its own schedule, hence the generous window there.
-        scheduleCacheCleanup(tempPath, sendPath === "legacy" ? 60_000 : 3_000);
+        // The response resolves after Discord has consumed the request body.
+        scheduleCacheCleanup(tempPath, 3_000);
     }
 }

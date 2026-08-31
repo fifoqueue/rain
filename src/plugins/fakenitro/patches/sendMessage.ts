@@ -7,7 +7,6 @@ import { fakenitroSettings } from "../storage";
 import { buildStickerURL,modifyIfNeeded } from "../utils";
 
 const messageModule = findByProps("sendMessage", "receiveMessage");
-const uploadModule = findByProps("uploadLocalFiles");
 const { getCurrentUser } = UserStore;
 const { getStickerById } = StickersStore;
 
@@ -35,13 +34,5 @@ export default function getPatches() {
         }),
     ];
 
-    if (uploadModule?.uploadLocalFiles !== undefined) {
-        patches.push(
-            before("uploadLocalFiles", uploadModule, args => {
-                if (getCurrentUser?.().premiumType === null)
-                    modifyIfNeeded(args[0].parsedMessage);
-            }),
-        );
-    }
     return patches;
 }

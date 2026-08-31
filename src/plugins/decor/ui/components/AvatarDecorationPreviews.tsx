@@ -1,13 +1,13 @@
 import { semanticColors } from "@api/ui/components/color";
 import { createStyles } from "@api/ui/styles";
-import { findByName } from "@metro";
+import { findByFilePath } from "@metro";
 import { UserStore } from "@metro/common/stores";
 import { CDN_URL } from "@plugins/decor/lib/constants";
 import { useCurrentUserDecorationsStore } from "@plugins/decor/lib/stores/CurrentUserDecorationsStore";
 import discordifyDecoration from "@plugins/decor/lib/utils/discordifyDecoration";
 import { Image, View } from "react-native";
 
-const HeaderAvatar = findByName("HeaderAvatar");
+const HeaderAvatar = findByFilePath("modules/profile_customization/native/HeaderAvatar.tsx", true);
 
 const useStyles = createStyles(_ => ({
     headerAvatarContainer: {

@@ -79,15 +79,6 @@ interface SegmentedControlPagesProps {
 
 export type SegmentedControlPages = React.FC<SegmentedControlPagesProps>;
 
-interface CompatSegmentedControlProps {
-    values: string[];
-    selectedSegmentIndex?: number;
-    onValueChange?: (index: number) => void;
-    onSetActiveIndex?: (index: number) => void;
-}
-
-export type CompatSegmentedControl = React.FC<CompatSegmentedControlProps>;
-
 interface SliderProps {
     value: number;
     minimumValue: number;

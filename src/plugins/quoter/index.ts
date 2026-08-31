@@ -12,8 +12,6 @@ export default definePlugin({
     author: [Contributors.benjii],
     id: "quoter",
     version: "1.1.0",
-    // Rendering needs the native RNCWebView view, which only the Android app ships
-    platforms: ["android"],
     start() {
         patches.push(patchActionSheet());
     },

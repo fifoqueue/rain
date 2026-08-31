@@ -3,6 +3,7 @@ import { createFileStorage, waitForHydration } from "@api/storage";
 import { showToast } from "@api/ui/toasts";
 import { logger } from "@lib/utils/logger";
 import { JSX } from "react";
+import { Platform } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -65,6 +66,11 @@ async function runPluginLifecycle(id: string, method: "start" | "eagerStart"): P
     const instance = pluginInstances.get(id);
     assert(instance, id, `run ${method} on unknown plugin`);
 
+    if (!isPluginAvailable(id)) {
+        logger.log(`[${id}] Skipped because it is unavailable`);
+        return;
+    }
+
     const settings = useSettings.getState();
     if (settings.safeMode && !isPluginCore(id)) {
         logger.log(`[${id}] Skipped in safe mode`);
@@ -101,7 +107,21 @@ export const findPluginById = (id: string): boolean => pluginInstances.has(id);
 
 export const isPluginCore = (id: string): boolean => id.startsWith("core");
 
+function isPluginAvailable(id: string): boolean {
+    const plugin = pluginInstances.get(id);
+    if (!plugin) return false;
+    if (plugin.platforms && !plugin.platforms.includes(Platform.OS as "android" | "ios")) return false;
+
+    try {
+        return plugin.predicates?.every(predicate => predicate()) ?? true;
+    } catch (error) {
+        logger.error(`[${id}] Availability check failed:`, error);
+        return false;
+    }
+}
+
 export function isPluginEnabled(id: string): boolean {
+    if (!isPluginAvailable(id)) return false;
     const setting = usePluginSettings.getState().settings[id];
     return setting?.enabled ?? isPluginCore(id);
 }

@@ -2,7 +2,6 @@ import { findByProps, findByStoreName, findByTypeName } from "@metro";
 import { definePlugin } from "@plugins";
 import { Developers } from "@rain/Developers";
 
-import { patchActual } from "./patches/actual";
 import { patchFuture } from "./patches/future";
 import Settings from "./Settings";
 
@@ -33,15 +32,7 @@ export default definePlugin({
         const YouBarNameplate = findByTypeName("YouBarNameplate");
         const YouBarNotificationsButton = findByTypeName("YouBarNotificationsButton");
 
-        // on future rain releases, there will not be a conditional here
-        if (YouBarBackground || YouBarNameplate || YouBarNotificationsButton) {
-            patches.push(...patchFuture(YouBarBackground, YouBarNameplate, YouBarNotificationsButton, options));
-        } else {
-            const ThemedYouBarModule = findByProps("ThemedYouBar");
-            if (ThemedYouBarModule) {
-                patches.push(...patchActual(ThemedYouBarModule, options));
-            }
-        }
+        patches.push(...patchFuture(YouBarBackground, YouBarNameplate, YouBarNotificationsButton, options));
 
         UserStore?.emitChange?.();
     },

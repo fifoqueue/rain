@@ -1,3 +1,4 @@
+import { findAssetId } from "@api/assets";
 import { before } from "@api/patcher";
 import { showToast } from "@api/ui/toasts";
 import { findByName, findByProps } from "@metro";
@@ -229,13 +230,12 @@ function patchRowManager() {
                         const React = require("react");
                         const ActionSheet = findByName("ActionSheet");
                         const FormRow = findByName("FormRow");
-                        const getAssetIDByName = findByProps("getAssetIDByName")?.getAssetIDByName;
                         const FluxDispatcher = findByProps("dispatch", "_subscriptions");
 
                         data.buttons.push(
                             React.createElement(FormRow, {
                                 label: "Remove Edit History",
-                                leading: React.createElement("img", { style: { opacity: 1 }, src: getAssetIDByName ? getAssetIDByName("ic_edit_24px") : undefined }),
+                                leading: React.createElement("img", { style: { opacity: 1 }, src: findAssetId("ic_edit_24px") }),
                                 onPress: () => {
                                     try {
                                         const Edited = EDIT_HISTORY_SEPARATOR + "\n\n";
@@ -261,7 +261,7 @@ function patchRowManager() {
                                             ActionSheet.hideActionSheet();
                                         }
 
-                                        showToast("[MessageLogger] Edit history removed", getAssetIDByName ? getAssetIDByName("ic_edit_24px") : undefined);
+                                        showToast("[MessageLogger] Edit history removed", findAssetId("ic_edit_24px"));
                                     } catch (e) {
                                         console.error("[MessageLogger] Remove edit history error:", e);
                                     }

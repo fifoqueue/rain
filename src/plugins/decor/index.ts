@@ -12,7 +12,6 @@ import { subscriptions as UserDecorationsStoreSubscriptions, useUsersDecorations
 import Settings from "./ui/pages/Settings";
 
 const ImageResolver = findByProps("getAvatarDecorationURL", "default");
-const AvatarDecorationUtils = findByProps("isAnimatedAvatarDecoration");
 
 const patches: any[] = [];
 
@@ -62,10 +61,10 @@ export default definePlugin({
             })
         );
 
-        if (AvatarDecorationUtils) {
+        if (ImageResolver?.isAnimatedIconHash) {
             patches.push(
-                after("isAnimatedAvatarDecoration", AvatarDecorationUtils, ([avatarDecoration]) => {
-                    if (ReactNative.Platform.OS === "ios" && avatarDecoration?.asset?.startsWith("file://")) return true;
+                after("isAnimatedIconHash", ImageResolver, ([asset]) => {
+                    if (ReactNative.Platform.OS === "ios" && asset?.startsWith("file://")) return true;
                 })
             );
         }

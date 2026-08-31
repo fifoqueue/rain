@@ -16,22 +16,6 @@ import { uploaderSettings } from "../storage";
 
 const CloudUpload = findByProps("CloudUpload")?.CloudUpload;
 const MessageSender = findByProps("sendMessage");
-const PendingMessages = findByProps("getPendingMessages", "deletePendingMessage");
-
-/** Cleans up any failed pending messages in the channel after an upload. */
-function cleanupPendingMessages(channelId: string) {
-    try {
-        const pending = PendingMessages?.getPendingMessages?.(channelId);
-        if (!pending) return;
-        for (const [messageId, message] of Object.entries(pending) as [string, any][]) {
-            if (message.state === "FAILED") {
-                PendingMessages.deletePendingMessage(channelId, messageId);
-            }
-        }
-    } catch (err) {
-        logger.warn("[Uploader] Failed to clean up pending messages:", err);
-    }
-}
 
 export default function getUploaderPatch(): (() => boolean)[] {
     // Resolve getChatInputRef for robust chat input manipulation
@@ -107,8 +91,6 @@ export default function getUploaderPatch(): (() => boolean)[] {
         if (typeof file.setStatus === "function") file.setStatus("CANCELED");
         // Mark the file/message as canceled by uploader for MessageLogger
         if (file && typeof file === "object") file.__rainenhancements = "upload-canceled";
-        if (channelId) setTimeout(() => cleanupPendingMessages(channelId), 500);
-
         if (link) {
             const filename = file?.filename ?? "file";
             // Use a markdown hyperlink so the filename is shown in chat

@@ -1,11 +1,11 @@
 import { after } from "@api/patcher";
-import { findByName, findByProps } from "@metro";
+import { findByFilePath, findByName, findByProps } from "@metro";
 import { ReactNative } from "@metro/common";
 import { SelectedChannelStore, SelectedGuildStore } from "@metro/common/stores";
 
 const { Pressable } = findByProps("Button", "Text", "View");
 const ProfileBanner = findByName("ProfileBanner", false);
-const HeaderAvatar = findByName("HeaderAvatar", false);
+const HeaderAvatar = findByFilePath("modules/profile_customization/native/HeaderAvatar.tsx");
 const { openMediaModal } = findByProps("openMediaModal");
 const { hideActionSheet } = findByProps("hideActionSheet");
 const { getChannelId } = SelectedChannelStore;

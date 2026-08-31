@@ -1,9 +1,7 @@
 import { instead } from "@api/patcher";
-import { showToast } from "@api/ui/toasts";
 import { ReactNative as RN } from "@metro/common";
-import { definePlugin, usePluginSettings } from "@plugins";
+import { definePlugin } from "@plugins";
 import { Contributors,Developers } from "@rain/Developers";
-import { Platform } from "react-native";
 
 const patches: any[] = [];
 
@@ -19,12 +17,6 @@ export default definePlugin({
     version: "1.0.0",
     platforms: ["android"],
     start() {
-        if (Platform.OS === "ios") {
-            showToast("This plugin does not do anything on iOS");
-            usePluginSettings.getState().updatePluginSetting("bluetoothaudiofix", false);
-            return;
-        }
-
         const onUnload = RN.TurboModuleRegistry.get("NativeAudioManagerModule") === null ? RN.TurboModuleRegistry.get("RTNAudioManager") : RN.TurboModuleRegistry.get("NativeAudioManagerModule");
         patches.push(instead("setCommunicationModeOn", onUnload, () => {}));
     },

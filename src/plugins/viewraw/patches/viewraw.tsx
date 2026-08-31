@@ -10,9 +10,7 @@ import RawPage from "./RawPage";
 
 const LazyActionSheet = findByProps("openLazy", "hideActionSheet");
 const Navigation = findByProps("push", "pushLazy", "pop");
-const modalCloseButton =
-    findByProps("getRenderCloseButton")?.getRenderCloseButton ??
-    findByProps("getHeaderCloseButton")?.getHeaderCloseButton;
+const modalCloseButton = findByProps("getHeaderCloseButton")?.getHeaderCloseButton;
 const Navigator =
     findByName("Navigator") ?? findByProps("Navigator")?.Navigator;
 const { FormRow, FormIcon } = Forms;

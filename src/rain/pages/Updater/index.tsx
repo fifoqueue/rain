@@ -29,8 +29,6 @@ export async function downloadUpdate() {
     try {
         _setIsChecking(true);
 
-        await UpdateModule.nativeDownload();
-
         openAlert(
             "rain-update-restart-alert",
             <AlertModal
@@ -45,7 +43,11 @@ export async function downloadUpdate() {
                                 BundleUpdaterManager.reload();
                             }}
                         />
-                        <AlertActionButton text={Strings.RESTART_LATER} variant="secondary" />
+                        <AlertActionButton
+                            text={Strings.RESTART_LATER}
+                            variant="secondary"
+                            onPress={() => UpdateModule.nativeDownload()}
+                        />
                     </AlertActions>
                 }
             />,

@@ -2,7 +2,7 @@
 import { lazyDestructure, proxyLazy } from "@lib/utils/lazy";
 import { createFilterDefinition } from "@metro/factories";
 import { findExports } from "@metro/finders";
-import { findByDisplayNameLazy, findByNameLazy, findByProps, findByPropsLazy } from "@metro/wrappers";
+import { findByNameLazy, findByProps, findByPropsLazy } from "@metro/wrappers";
 
 import * as t from "./types/components";
 
@@ -15,7 +15,6 @@ const findSingular = (prop: string) => proxyLazy(() => findExports(bySingularPro
 const findProp = (...props: string[]) => proxyLazy(() => findByProps(...props)[props[0]]);
 
 // Discord
-export const LegacyAlert = findByDisplayNameLazy("FluxContainer(Alert)");
 export const CompatButton = findByPropsLazy("Looks", "Colors", "Sizes");
 export const HelpMessage = findByNameLazy("HelpMessage");
 
@@ -79,8 +78,6 @@ export const Slider = findByProps("SliderComponent") as t.Slider
 export const SegmentedControl = findProp("SegmentedControl") as t.SegmentedControl;
 export const SegmentedControlPages = findProp("SegmentedControlPages") as t.SegmentedControlPages;
 export const useSegmentedControlState = findSingular("useSegmentedControlState") as (arg: t.SegmentedControlStateArgs) => t.SegmentedControlState;
-export const CompatSegmentedControl = findProp("CompatSegmentedControl") as t.CompatSegmentedControl;
-
 export const FloatingActionButton = findProp("FloatingActionButton") as t.FloatingActionButton;
 export const ActionSheet = findProp("ActionSheet") as t.ActionSheet;
 export const BottomSheetTitleHeader = findProp("BottomSheetTitleHeader");

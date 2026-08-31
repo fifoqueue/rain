@@ -5,7 +5,6 @@ import { loadAllEffectData } from "./patches/effects";
 import { patchGetAllProfileEffects, patchGetProfileEffect, patchGetUserProfile } from "./patches/profile";
 import Settings from "./settings";
 
-/*
 export default definePlugin({
     name: "CustomEffects",
     description: "Custom profile effects",
@@ -24,4 +23,3 @@ export default definePlugin({
     stop() {},
     settings: Settings
 });
-*/

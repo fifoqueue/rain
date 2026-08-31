@@ -127,30 +127,6 @@ export default definePlugin({
             args[0].isMobileOnline = false;
         }));
 
-        // Guild member row
-        const Rows = findByProps("GuildMemberRow");
-        if (Rows?.GuildMemberRow) {
-            unpatches.push(after("type", Rows.GuildMemberRow, (args: any[], res: any) => {
-                const user = args[0]?.user;
-                if (!platformIndicatorSettings.userList) return;
-                const statusIconsView = findInReactTree(res, c => c.key === "GuildMemberRowStatusIconsView");
-                if (!statusIconsView) {
-                    const row = findInReactTree(res, c => c.props?.style?.flexDirection === "row");
-                    if (row) {
-                        row.props.children.splice(2, 0,
-                            <View
-                                key="GuildMemberRowStatusIconsView"
-                                style={{
-                                    flexDirection: "row"
-                                }}>
-                                {debugLabels ? <Text>GMRSIV</Text> : <StatusIcons userId={user.id} />}
-                            </View>
-                        );
-                    }
-                }
-            }));
-        }
-
         let patchedAvatar = false;
         // User row patch
         const rowPatch = (args: any[], res: any) => {

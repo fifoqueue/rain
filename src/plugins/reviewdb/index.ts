@@ -7,7 +7,6 @@ import patchContextMenu from "./patches/patchContextMenu";
 import patchProfile from "./patches/patchProfile";
 import patchSegmentedProfile from "./patches/patchSegmentedProfile";
 import patchServer from "./patches/patchServer";
-import patchSimplifiedProfile from "./patches/patchSimplifiedProfile";
 import Settings from "./Settings";
 import { useReviewDBSettings } from "./storage";
 
@@ -26,7 +25,6 @@ export default definePlugin({
     async start() {
         waitForHydration(useReviewDBSettings);
         patches.push(patchProfile());
-        patches.push(patchSimplifiedProfile());
         patches.push(patchServer());
         patches.push(patchContextMenu());
         patches.push(patchSegmentedProfile());
