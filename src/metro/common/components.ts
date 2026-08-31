@@ -11,7 +11,7 @@ const bySingularProp = createFilterDefinition<[string]>(
     prop => `rain.metro.common.components.bySingularProp(${prop})`
 );
 
-const findSingular = (prop: string) => proxyLazy(() => findExports(bySingularProp(prop))?.[prop]);
+const findSingular = (prop: string) => proxyLazy(() => findExports(bySingularProp(prop))?.[prop] ?? findByProps(prop)?.[prop]);
 const findProp = (...props: string[]) => proxyLazy(() => findByProps(...props)[props[0]]);
 
 // Discord
@@ -52,7 +52,7 @@ export const FormRadio = findSingular("FormRadio");
 export const FormCheckbox = findSingular("FormCheckbox");
 
 // Card
-export const Card = findProp("Card");
+export const Card = findProp("Card", "InternalCard");
 export const RedesignCompat = proxyLazy(() => findByProps("RedesignCompat").RedesignCompat);
 
 // Alert

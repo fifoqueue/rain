@@ -6,7 +6,7 @@ import React from "react";
 import { ScrollView } from "react-native";
 
 import { useMessageLoggerSettings } from "./storage";
-const { Card } = findByProps("Card");
+const { Card } = findByProps("Card", "InternalCard");
 
 export default function MessageLoggerSettings() {
     const settings = useMessageLoggerSettings();

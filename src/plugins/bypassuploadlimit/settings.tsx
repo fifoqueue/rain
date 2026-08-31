@@ -7,7 +7,7 @@ import { ScrollView, Text } from "react-native";
 import { fetchZiplinePublicDomains } from "./api/zipline";
 import { useUploaderSettings } from "./storage";
 
-const { Card } = findByProps("Card");
+const { Card } = findByProps("Card", "InternalCard");
 const { showSimpleActionSheet } = findByProps("showSimpleActionSheet");
 const { hideActionSheet } = findByProps("openLazy", "hideActionSheet");
 

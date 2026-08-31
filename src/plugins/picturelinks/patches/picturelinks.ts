@@ -46,7 +46,8 @@ async function openModal(src: string, event: any) {
 }
 
 export function unpatchAvatar() {
-    return after("default", HeaderAvatar, ([{ user, style, guildId }], res) => {
+    const target = HeaderAvatar?.default?.render ? HeaderAvatar.default : HeaderAvatar;
+    return after(target?.render ? "render" : "default", target, ([{ user, style, guildId }], res) => {
         let ext = "png";
         if (typeof user.guildMemberAvatars?.[guildId] === "string") {
             if (user.guildMemberAvatars?.[guildId].includes("a_")) { ext = "gif"; }

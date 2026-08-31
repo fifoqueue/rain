@@ -71,7 +71,7 @@ export function patchModDetection() {
 export function patchNetwork(): PatchCleanupFn {
     // Analytics and tracking endpoints to block
     const analyticsTest =
-    /client-analytics\.braintreegateway\.com|discord\.com\/api\/v9\/(science|track)|app\.adjust\..*|.*\.ingest\.sentry\.io/;
+    /client-analytics\.braintreegateway\.com|discord(?:app)?\.com\/api(?:\/v\d+)?\/(science|track)|app\.adjust\..*|.*appsflyer.*|.*\.ingest\.sentry\.io|datadog\.discord\.tools/;
 
     try {
         const unpatch = instead(
@@ -136,6 +136,8 @@ export function patchMiscellaneous(): PatchCleanupFn {
       noop("handleTrack", AnalyticsUtils.AnalyticsActionHandlers),
         AnalyticsUtils?.AnalyticsActionHandlers &&
       noop("handleFingerprint", AnalyticsUtils.AnalyticsActionHandlers),
+        AnalyticsUtils?.AnalyticsActionHandlers &&
+      noop("handleSetAnalyticsToken", AnalyticsUtils.AnalyticsActionHandlers),
 
         // Super properties tracking
         SuperPropUtils && noop("track", SuperPropUtils),

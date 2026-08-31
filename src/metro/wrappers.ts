@@ -6,7 +6,11 @@ export const findByProps = (...props: string[]) => findExports(byProps(...props)
 export const findByPropsLazy = (...props: string[]) => createLazyModule(byProps(...props));
 export const findByPropsAll = (...props: string[]) => findAllExports(byProps(...props));
 
-export const findByName = (name: string, expDefault = true) => findExports(expDefault ? byName(name) : byName.byRaw(name));
+export const findByName = (name: string, expDefault = true) =>
+    findExports(expDefault ? byName(name) : byName.byRaw(name))
+    ?? (name === "HeaderAvatar"
+        ? findExports(byFilePath("modules/profile_customization/native/HeaderAvatar.tsx", expDefault))
+        : undefined);
 export const findByNameLazy = (name: string, expDefault = true) => createLazyModule(expDefault ? byName(name) : byName.byRaw(name));
 export const findByNameAll = (name: string, expDefault = true) => findAllExports(expDefault ? byName(name) : byName.byRaw(name));
 

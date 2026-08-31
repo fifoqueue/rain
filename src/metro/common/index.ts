@@ -9,7 +9,7 @@ export * as components from "./components";
 // Discord
 export const constants = findByPropsLazy("Fonts", "Permissions");
 export const channels = findByPropsLazy("getVoiceChannelId");
-export const i18n = findByPropsLazy("Messages");
+export const i18n = findByProps("Messages") ?? { Messages: {} };
 
 export const clipboard = findByPropsLazy("setString", "getString", "hasString");
 export const assets = findByPropsLazy("registerAsset");

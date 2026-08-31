@@ -12,7 +12,7 @@ import { useCacheStore } from "@plugins/_core/cloudsync/stores/CacheStore";
 import React from "react";
 import { ActivityIndicator,ScrollView } from "react-native";
 
-const { Card } = findByProps("Card");
+const { Card } = findByProps("Card", "InternalCard");
 
 export default function CloudSyncSettings() {
     const settings = useCloudSyncSettings();

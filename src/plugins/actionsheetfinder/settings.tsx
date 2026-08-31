@@ -8,7 +8,7 @@ import { ScrollView, View } from "react-native";
 
 import { clearLogs,useActionSheetFinderSettings } from "./storage";
 
-const { Card: CardComponent } = findByProps("Card");
+const { Card: CardComponent } = findByProps("Card", "InternalCard");
 
 const LOG_COLORS = [
     semanticColors.CARD_SECONDARY_BG,

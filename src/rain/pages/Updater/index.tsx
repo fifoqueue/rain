@@ -62,9 +62,9 @@ export function checkForUpdate() {
 
     React.useEffect(() => {
         if (useLoaderConfig.getState().customLoadUrl.enabled) return;
-        fetch("https://codeberg.org/api/v1/repos/raincord/rain/releases?limit=1")
+        fetch("https://api.github.com/repos/fifoqueue/rain/releases/latest")
             .then(r => r.json())
-            .then(([latestRelease]) => setHasUpdate(!!latestRelease && isNewerVersion(latestRelease.tag_name, getDebugInfo().rain.version)));
+            .then(latestRelease => setHasUpdate(!!latestRelease && isNewerVersion(latestRelease.tag_name, getDebugInfo().rain.version)));
     }, []);
 
     return hasUpdate;
