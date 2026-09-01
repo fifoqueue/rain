@@ -15,8 +15,10 @@ function makePayload(name: string, args: any[]): object {
 
 export async function callBridgeMethod(method: string, ...args: any[]): Promise<any> {
     try {
-        const result = await BridgePromise.readAsDataURL(
-            makePayload(method, args),
+        const payload = makePayload(method, args);
+        const result = await (
+            (globalThis as any).__RAIN_BRIDGE_CALL_ASYNC__?.(payload)
+            ?? BridgePromise.readAsDataURL(payload)
         );
 
         if ("error" in result) throw result.error;
