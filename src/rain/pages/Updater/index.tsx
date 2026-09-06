@@ -29,6 +29,9 @@ export async function downloadUpdate() {
     try {
         _setIsChecking(true);
 
+        await UpdateModule.nativeBundleClear();
+        await UpdateModule.nativeDownload();
+
         openAlert(
             "rain-update-restart-alert",
             <AlertModal
