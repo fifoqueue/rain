@@ -2,12 +2,13 @@ import { after } from "@api/patcher";
 import { findInReactTree } from "@lib/utils";
 import { logger } from "@lib/utils/logger";
 import { findByFilePathLazy } from "@metro";
+import { getLazyContext } from "@metro/lazy";
 import { useColorsPref } from "@plugins/_core/painter/themes/preferences";
 import { _colorRef } from "@plugins/_core/painter/themes/updater";
 import chroma from "chroma-js";
 import { ImageBackground, StyleSheet } from "react-native";
 
-const Messages = findByFilePathLazy("modules/messages/native/Messages.tsx", true);
+const Messages = findByFilePathLazy("modules/messages/native/Messages.tsx");
 
 function ThemeBackground({ children }: { children: React.ReactNode; }) {
     const customBackground = useColorsPref(state => state.customBackground);
@@ -31,8 +32,10 @@ function ThemeBackground({ children }: { children: React.ReactNode; }) {
 
 export default function patchChatBackground() {
     try {
-        const patches = [
-            after("render", Messages, (_, ret) => {
+        const patches: (() => void)[] = [];
+        const unsubscribe = getLazyContext(Messages)!.getExports(module => {
+            const isFunction = typeof module.default === "function";
+            patches.push(after(isFunction ? "default" : "render", isFunction ? module : module.default, (_, ret) => {
                 if (!_colorRef.current || !_colorRef.current.background?.url) return;
                 const messagesComponent = findInReactTree(
                     ret,
@@ -51,9 +54,12 @@ export default function patchChatBackground() {
                     ]);
                 }
                 return <ThemeBackground>{ret}</ThemeBackground>;
-            })
-        ];
-        return () => patches.forEach(x => x());
+            }));
+        });
+        return () => {
+            unsubscribe();
+            patches.forEach(x => x());
+        };
     } catch (e) {
         logger.error("Failed to patch chat background.", e);
         return () => { };
