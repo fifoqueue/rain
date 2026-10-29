@@ -34,7 +34,11 @@ export default function TapTapSettings() {
                     <TableRadioGroup
                         title="Tap Username Action"
                         value={taptapSettings.tapUsernameAction}
-                        onChange={(value: string) => useTapTapSettings.getState().updateSettings({ tapUsernameAction: value })}
+                        onChange={(value: string) => {
+                            if (value === "mention" || value === "profile") {
+                                useTapTapSettings.getState().updateSettings({ tapUsernameAction: value });
+                            }
+                        }}
                     >
                         <TableRadioRow
                             label="Insert @mention"

@@ -87,7 +87,7 @@ export const useUsersDecorationsStore = create<UsersDecorationsState>((set, get)
 
 export const subscribe = () => [
     subscribeToFluxDispatcher("LOAD_MESSAGES_SUCCESS", ({ messages }) => {
-        useUsersDecorationsStore.getState().fetchMany(messages.map(m => m.author.id));
+        useUsersDecorationsStore.getState().fetchMany(messages.map((message: { author: { id: string } }) => message.author.id));
     }),
     subscribeToFluxDispatcher("CONNECTION_OPEN", () => {
         useUsersDecorationsStore.getState().fetch(UserStore.getCurrentUser().id, true);

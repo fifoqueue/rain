@@ -49,7 +49,7 @@ export default (decoration: Decoration) =>
                                 content: `Are you sure you want to delete ${decoration.alt ?? "this decoration"}?`,
                                 confirmText: "Delete",
                                 cancelText: "Cancel",
-                                confirmColor: "red" as ButtonColors.RED,
+                                confirmColor: "red",
                                 onConfirm: () =>
                                     ReactNative.unstable_batchedUpdates(() => useCurrentUserDecorationsStore.getState().delete(decoration))
                             })

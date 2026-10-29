@@ -218,7 +218,7 @@ export function* getModules(uniq: string, all = false) {
     if (cacheComplete) return;
 
     for (const id of moduleKeys) {
-        if (useCache && cache![id]) continue;
+        if (useCache && cache![Number(id)]) continue;
 
         const exports = requireModule(Number(id));
         if (isBadExports(exports)) continue;
@@ -241,7 +241,7 @@ export function* getCachedPolyfillModules(name: string) {
 
     if (!fullLookup) {
         for (const id of moduleKeys) {
-            if (cache[id]) continue;
+            if (cache[Number(id)]) continue;
 
             const exports = requireModule(Number(id));
             if (isBadExports(exports)) continue;

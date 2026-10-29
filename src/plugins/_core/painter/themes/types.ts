@@ -51,7 +51,19 @@ export interface InternalColorDefinition {
     };
 }
 
-export type ColorManifest = RainColorManifest | ThemeManifest;
+export interface EnmityColorManifest {
+    spec?: 1;
+    name: string;
+    description?: string;
+    authors?: Author[];
+    theme_color_map?: Record<string, (string | false)[]>;
+    colours?: Record<string, string>;
+    colors?: Record<string, string>;
+    unsafe_colors?: Record<string, string>;
+    background?: BackgroundDefinition;
+}
+
+export type ColorManifest = RainColorManifest | ThemeManifest | EnmityColorManifest;
 
 export type Author = { name: string, id?: `${bigint}`; };
 

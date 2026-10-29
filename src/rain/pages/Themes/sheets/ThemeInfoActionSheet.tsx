@@ -10,7 +10,7 @@ import { clipboard, FluxUtils } from "@metro/common";
 import { ActionSheet, Avatar, Card, IconButton, Text } from "@metro/common/components";
 import { UserStore } from "@metro/common/stores";
 import { fetchTheme, removeTheme, selectTheme, ThemeInfo } from "@plugins/_core/painter/themes";
-import { ColorManifest, RainColorManifest, ThemeManifest } from "@plugins/_core/painter/themes/types";
+import { Author, ColorManifest, RainColorManifest, ThemeManifest } from "@plugins/_core/painter/themes/types";
 import React, { ComponentProps, useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 
@@ -32,12 +32,12 @@ function ThemeInfoIconButton(props: ComponentProps<typeof IconButton>) {
     return <IconButton {...props} label={props.label} />;
 }
 
-function AuthorCard({ title, authors }: { title: string; authors: { name: string; id: bigint }[] }) {
+function AuthorCard({ title, authors }: { title: string; authors: Author[] }) {
     if (!authors?.length) return null;
 
     const users: any[] = FluxUtils.useStateFromStoresArray([UserStore], () => {
         authors.forEach(a => a.id && maybeFetchUser(a.id));
-        return authors.map(a => UserStore.getUser(a.id));
+        return authors.map(a => a.id ? UserStore.getUser(a.id) : undefined);
     });
 
     return (
@@ -65,13 +65,13 @@ function AuthorCard({ title, authors }: { title: string; authors: { name: string
                             borderRadius: 8,
                         }}
                     >
-                        <Avatar
+                        {users[index] && <Avatar
                             size="small"
                             user={users[index]}
-                        />
+                        />}
                         <Text
                             variant="text-md/medium"
-                            onPress={() => showUserProfileActionSheet({ userId: author.id })}
+                            onPress={author.id ? () => showUserProfileActionSheet({ userId: author.id }) : undefined}
                         >
                             {author.name}
                         </Text>

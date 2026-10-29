@@ -1,5 +1,6 @@
 import { lazyDestructure } from "@lib/utils/lazy";
 import { findByProps } from "@metro";
+import type { JSX } from "react";
 
 export const { openAlert, dismissAlert } = lazyDestructure(() => findByProps("openAlert", "dismissAlert"));
 

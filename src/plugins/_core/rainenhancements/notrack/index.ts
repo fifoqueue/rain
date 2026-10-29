@@ -105,8 +105,7 @@ export function patchConsole(): PatchCleanupFn {
   const sentrified: ConsoleFunctions = {};
 
   try {
-      // We need to use Object.keys because TypeScript doesn't allow indexing Console with strings
-      (Object.keys(console) as Array<keyof Console>).forEach(key => {
+      Object.keys(console).forEach(key => {
           const consoleFunc = (console as unknown as ConsoleFunctions)[key];
           if (consoleFunc) {
               sentrified[key] = consoleFunc;

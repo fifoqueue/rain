@@ -12,7 +12,6 @@ export default function ReviewBadge({ badge }: ReviewBadgeProps) {
         <RN.Pressable
             style={{ marginLeft: 4 }}
             onPress={() => {
-                // @ts-expect-error this is a vendetta-types moment
                 showToast(badge.name, { uri: badge.icon });
             }}
         >

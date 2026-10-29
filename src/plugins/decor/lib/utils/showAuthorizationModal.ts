@@ -22,7 +22,7 @@ export default () =>
                 responseType: "code",
                 permissions: 0n,
                 cancelCompletesFlow: false,
-                callback: async ({ location }) => {
+                callback: async ({ location }: { location: string }) => {
                     const url = new URL(location);
                     // We use i18n for the client because it doesnt change across translations and it makes it better for people who make bad forks and wont change it :P
                     url.searchParams.append("client", Strings.RAIN);

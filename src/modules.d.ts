@@ -9,7 +9,7 @@ declare module "*.html" {
 }
 
 declare module "#rain-plugins" {
-    const plugins: Record<string, import("./rain/plugins/types").rainPlugin>;
+    const plugins: Record<string, import("./plugins/types").rainPlugin>;
     export default plugins;
 }
 

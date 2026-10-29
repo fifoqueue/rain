@@ -2,15 +2,23 @@ import { findAssetId } from "@api/assets";
 import { showToast } from "@api/ui/toasts";
 import { findByName } from "@metro";
 
+import type { Decoration } from "../../lib/api";
 import { useCurrentUserDecorationsStore } from "../../lib/stores/CurrentUserDecorationsStore";
 import discordifyDecoration from "../../lib/utils/discordifyDecoration";
 import showDecorationActionSheet from "../../lib/utils/showDecorationActionSheet";
-import Card from "./Card";
+import Card, { CardProps } from "./Card";
 
 
 const CutoutableAvatarDecoration = findByName("CutoutableAvatarDecoration");
 
-export default function DecorationCard({ decoration, onPress = undefined, selectable = undefined, disabled = undefined }) {
+interface DecorationCardProps {
+    decoration: Decoration;
+    onPress?: CardProps["onPress"];
+    selectable?: boolean;
+    disabled?: boolean;
+}
+
+export default function DecorationCard({ decoration, onPress, selectable, disabled }: DecorationCardProps) {
     const selectedDecoration = useCurrentUserDecorationsStore(s => s.selectedDecoration);
     const select = useCurrentUserDecorationsStore(s => s.select);
     selectable ??= decoration.reviewed === null || decoration.reviewed === true;

@@ -53,12 +53,12 @@ export const setUserDecoration = async (decoration: Decoration | NewDecoration |
         decoration = decoration as Decoration;
         formData.append("hash", decoration.hash);
     } else if (!decoration) {
-        formData.append("hash", null);
+        formData.append("hash", "null");
     } else if (decoration && Object.hasOwn(decoration, "uri")) {
         decoration = decoration as NewDecoration;
         // @ts-expect-error
         formData.append("image", { uri: decoration.uri, type: decoration.fileType, name: decoration.fileName });
-        formData.append("alt", decoration.alt);
+        formData.append("alt", String(decoration.alt));
     }
 
     return cFetch(API_URL + `/users/${id}/decoration`, { method: "PUT", body: formData })

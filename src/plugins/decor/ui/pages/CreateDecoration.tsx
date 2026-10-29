@@ -65,7 +65,7 @@ export default function CreateDecoration() {
     const createDecoration = useCurrentUserDecorationsStore(state => state.create);
     const styles = useStyles();
 
-    const isDisabled = !asset || !alt.trim() || asset.type !== "image/png" || !!error;
+    const isDisabled = !asset?.uri || !alt.trim() || asset.type !== "image/png" || !!error;
 
     return (
         <View style={styles.root}>
@@ -161,18 +161,24 @@ export default function CreateDecoration() {
                     loading={creating}
                     disabled={isDisabled}
                     onPress={async () => {
+                        const sourceUri = asset?.uri;
+                        if (!sourceUri || asset?.type !== "image/png" || !alt.trim()) {
+                            setError(new Error("Select a PNG image and enter a decoration name."));
+                            return;
+                        }
+
                         setCreating(true);
                         try {
                             let uri: string;
                             if (ReactNative.Platform.OS === "ios") {
-                                uri = "data:" + asset!.type + ";base64," + (await readFileAsBase64(asset!.uri));
+                                uri = "data:" + asset.type + ";base64," + (await readFileAsBase64(sourceUri));
                             } else {
-                                uri = asset!.uri;
+                                uri = sourceUri;
                             }
                             await createDecoration({
                                 uri,
-                                fileName: asset!.fileName,
-                                fileType: asset!.type,
+                                fileName: asset.fileName || "decoration.png",
+                                fileType: asset.type,
                                 alt,
                             });
                             navigation.goBack();

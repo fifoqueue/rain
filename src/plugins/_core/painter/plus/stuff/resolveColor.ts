@@ -12,9 +12,9 @@ export function matchTheme(colors: {
 	light?: string;
 	midnight?: string;
 }): string | undefined {
-    const { theme } = ThemeStore;
+    const theme: string = ThemeStore.theme;
 
-    if (theme in colors) return colors[theme];
+    if ((theme === "darker" || theme === "light" || theme === "midnight") && theme in colors) return colors[theme];
     if (["dark", "midnight"].includes(theme)) return colors.darker;
     return colors.light;
 }

@@ -18,7 +18,10 @@ export default function TenorGifSearchSettings() {
                 <TableRadioGroup
                     title="Grid Quality"
                     value={gridQuality}
-                    onChange={(v: string) => updateSettings({ gridQuality: v })}
+                    onChange={(value: string) => {
+                        const quality = GridQualities.find(quality => quality === value);
+                        if (quality) updateSettings({ gridQuality: quality });
+                    }}
                 >
                     {GridQualities.map(q => (
                         <TableRadioRow

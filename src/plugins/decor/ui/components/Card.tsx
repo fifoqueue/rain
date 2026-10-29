@@ -2,6 +2,7 @@ import { semanticColors } from "@api/ui/components/color";
 import { createStyles } from "@api/ui/styles";
 import { findByProps } from "@metro";
 import { ReactNative } from "@metro/common";
+import type { GestureResponderEvent, TouchableOpacityProps } from "react-native";
 
 
 const { View, TouchableOpacity } = ReactNative;
@@ -32,11 +33,15 @@ const useStyles = createStyles(_ => ({
     }
 }));
 
-const hapticFeedbackWrapper = (fn, ...args) => {
+const hapticFeedbackWrapper = (fn: NonNullable<TouchableOpacityProps["onPress"]>, event: GestureResponderEvent) => {
     triggerHapticFeedback(HapticFeedbackTypes.IMPACT_LIGHT);
-    fn(...args);
+    fn(event);
 };
 
+export type CardProps = Pick<TouchableOpacityProps, "onPress" | "onLongPress" | "disabled" | "children"> & {
+    lookDisabled?: boolean;
+    selected?: boolean;
+};
 
 export default function Card({
     onPress = undefined,
@@ -45,12 +50,12 @@ export default function Card({
     lookDisabled = undefined,
     selected = false,
     children
-}) {
+}: CardProps) {
     const styles = useStyles();
     return (
         <TouchableOpacity
-            onPress={onPress ? (...args) => hapticFeedbackWrapper(onPress, ...args) : undefined}
-            onLongPress={onLongPress ? (...args) => hapticFeedbackWrapper(onLongPress, ...args) : undefined}
+            onPress={onPress ? event => hapticFeedbackWrapper(onPress, event) : undefined}
+            onLongPress={onLongPress ? event => hapticFeedbackWrapper(onLongPress, event) : undefined}
             disabled={disabled}
         >
 

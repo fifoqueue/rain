@@ -1,5 +1,6 @@
 import { findAssetId } from "@api/assets";
 import { LegacyFormRow, TableRow } from "@metro/common/components";
+import type { JSX } from "react";
 import { LayoutAnimation, View } from "react-native";
 
 export interface SummaryProps {

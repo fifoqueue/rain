@@ -1,5 +1,6 @@
 import { ThemeContext } from "@api/ui/styles";
 import { React } from "@metro/common";
+import type { JSX } from "react";
 import { Falsy } from "react-native";
 
 import ErrorCard from "./ErrorCard";
