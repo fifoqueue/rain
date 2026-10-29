@@ -6,6 +6,7 @@ import { Developers } from "@rain/Developers";
 const AccountDispatcher = findByProps("getCanUseMultiAccountMobile");
 const MultiAccountStore = findByStoreName("MultiAccountStore");
 const patches: (() => boolean)[] = [];
+let notificationsDescriptor: PropertyDescriptor | undefined;
 
 export default definePlugin({
     name: "AccountSwitcher",
@@ -20,13 +21,15 @@ export default definePlugin({
             }),
         );
 
+        notificationsDescriptor = Object.getOwnPropertyDescriptor(MultiAccountStore, "canUseMultiAccountNotifications");
         Object.defineProperty(MultiAccountStore, "canUseMultiAccountNotifications", {
             get: () => true,
             configurable: true,
         });
     },
     stop() {
-        for (const unpatch of patches) unpatch();
-        delete (MultiAccountStore as any).canUseMultiAccountNotifications;
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
+        if (notificationsDescriptor) Object.defineProperty(MultiAccountStore, "canUseMultiAccountNotifications", notificationsDescriptor);
+        else delete (MultiAccountStore as any).canUseMultiAccountNotifications;
     }
 });

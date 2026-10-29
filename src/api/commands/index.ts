@@ -35,11 +35,8 @@ export function registerCommand(command: RainApplicationCommand): () => void {
         builtInCommands = commandsModule.getBuiltInCommands(Object.values(ApplicationCommandType), true, false);
     }
 
-    builtInCommands.sort((a: ApplicationCommand, b: ApplicationCommand) => parseInt(b.id!) - parseInt(a.id!));
-    const lastCommand = builtInCommands[builtInCommands.length - 1];
-
-    // Override the new command's id to the last command id - 1
-    command.id = (parseInt(lastCommand.id!, 10) - 1).toString();
+    const ids = [...builtInCommands, ...commands].map(command => Number(command.id)).filter(Number.isFinite);
+    command.id = String(Math.min(-1, ...ids) - 1);
 
     // Fill optional args
     command.__rain = {
@@ -59,9 +56,7 @@ export function registerCommand(command: RainApplicationCommand): () => void {
     }
 
     instead("execute", command, (args, orig) => {
-        Promise.resolve(
-            orig.apply(command, args)
-        ).then(ret => {
+        return Promise.resolve().then(() => orig.apply(command, args)).then(ret => {
             if (ret && typeof ret === "object") {
                 messageUtil.sendMessage(args[1].channel.id, ret);
             }

@@ -13,7 +13,7 @@ export default () => {
         if (!label) return;
 
         if (text) label.props.children = text;
-        if (textColor && label.props?.style) label.props.style.push({ color: textColor });
-        if (backgroundColor && ret?.props?.style) ret.props.style.push({ backgroundColor });
+        if (textColor) label.props.style = [label.props.style, { color: textColor }];
+        if (backgroundColor && ret?.props) ret.props.style = [ret.props.style, { backgroundColor }];
     });
 };

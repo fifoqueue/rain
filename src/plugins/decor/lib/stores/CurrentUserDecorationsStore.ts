@@ -65,7 +65,7 @@ export const useCurrentUserDecorationsStore = create(
     }))
 );
 
-export const subscriptions = [
+export const subscribe = () => [
     useCurrentUserDecorationsStore.subscribe(
         state => [state.selectedDecoration, state.fetched],
         debounce(([decoration, fetched], [prevDecoration, prevFetched]) => {

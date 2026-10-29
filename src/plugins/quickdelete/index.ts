@@ -56,13 +56,11 @@ export default definePlugin({
         unpatch = instead("show", Popup, (args, fn) => {
             const popup = args?.[0];
             const title = popup?.title;
-            const confirmText = popup?.confirmText;
-            const body = popup?.children?.props?.message?.content ?? "";
 
             if (
                 !popup?.onConfirm ||
                 typeof popup.onConfirm !== "function" ||
-                (typeof title !== "string" && typeof body !== "string")
+                typeof title !== "string"
             ) {
                 return fn(...args);
             }
@@ -71,11 +69,7 @@ export default definePlugin({
                 const matcher = autoConfirmMessages[type];
                 if (!matcher) return false;
 
-                const titleLower = title?.toLowerCase();
-                const confirmLower = confirmText?.toLowerCase();
-                const bodyLower = body?.toLowerCase();
-                const matcherLower = matcher.toLowerCase();
-                const match = titleLower?.includes(matcherLower) || confirmLower?.includes(matcherLower) || bodyLower?.includes(matcherLower);
+                const match = title.trim().toLowerCase() === matcher.trim().toLowerCase();
                 return quickDeleteSettings[KEYS[type].storage] && match;
             };
 

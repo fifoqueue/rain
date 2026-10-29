@@ -18,9 +18,10 @@ function reinitStore() {
 
         DeveloperExperimentStore.initialize();
 
-        if (unpatchDevStoreProps) unpatchDevStoreProps();
-        unpatchDevStoreProps = undefined;
     } catch (e) {
+    } finally {
+        unpatchDevStoreProps?.();
+        unpatchDevStoreProps = undefined;
     }
 }
 

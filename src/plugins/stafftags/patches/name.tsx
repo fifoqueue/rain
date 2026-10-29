@@ -2,6 +2,7 @@ import { after } from "@api/patcher";
 import { findInReactTree } from "@lib/utils";
 import { findByName, findByProps } from "@metro";
 import { ChannelStore, GuildStore } from "@metro/common/stores";
+import React from "react";
 
 import getTag, { getBuiltInTags } from "../lib/getTag";
 
@@ -31,6 +32,7 @@ export default () => {
                     } else {
                         const row = findInReactTree(ret, (c: any) => c?.props?.style?.flexDirection === "row");
                         if (row?.props?.children) {
+                            row.props.children = React.Children.toArray(row.props.children);
                             row.props.children.push(
                                 <TagModule.default
                                     style={{ marginLeft: 0 }}

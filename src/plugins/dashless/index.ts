@@ -1,9 +1,10 @@
 import { after } from "@api/patcher";
+import { constants } from "@metro/common";
 import { findByProps } from "@metro/wrappers";
 import { definePlugin } from "@plugins";
 import { Contributors } from "@rain/Developers";
 
-const { View } = findByProps("View", "Text");
+const channelNames = findByProps("computeChannelName");
 const patches: (() => void)[] = [];
 
 export default definePlugin({
@@ -14,8 +15,10 @@ export default definePlugin({
     version: "1.0.0",
     eagerStart() {
         patches.push(
-            after("render", View.prototype || View, (_, res) => {
-                return traverseAndModify(res);
+            after("computeChannelName", channelNames, ([channel], name) => {
+                const { GUILD_TEXT, GUILD_ANNOUNCEMENT } = constants.ChannelTypes;
+                if ((channel?.type === GUILD_TEXT || channel?.type === GUILD_ANNOUNCEMENT) && typeof name === "string")
+                    return name.replace(/-/g, " ");
             })
         );
     },
@@ -24,25 +27,3 @@ export default definePlugin({
         patches.length = 0;
     },
 });
-
-const traverseAndModify = (node: any): any => {
-    if (typeof node === "string") {
-        return node.replace(/-/g, " ");
-    }
-
-    if (Array.isArray(node)) {
-        return node.map(traverseAndModify);
-    }
-
-    if (node?.props?.children) {
-        return {
-            ...node,
-            props: {
-                ...node.props,
-                children: traverseAndModify(node.props.children),
-            },
-        };
-    }
-
-    return node;
-};

@@ -1,3 +1,4 @@
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import React from "react";
 
 type Unpatch = () => unknown;
@@ -116,19 +117,20 @@ export function installProfileAndPaymentSurfaces(
     preview: { useIsPreview: () => boolean; wrap: (component: any, props: any) => any },
 ): Unpatch[] {
     const targets: [any, string, keyof ExtraClutterSettings][] = [];
-    const add = (module: any, key: string, flag: keyof ExtraClutterSettings, memo = false) => {
-        targets.push([memo ? module?.[key] : module, memo ? "type" : key, flag]);
+    const add = (module: any, key: string, flag: keyof ExtraClutterSettings) => {
+        const [slot, owner] = getComponentPatchTarget(module, key);
+        targets.push([owner, slot, flag]);
     };
     add(find.byName("CutoutableAvatarDecoration", false), "default", "hideAvatarDecorations");
     add(find.byProps("useAvatarDecoration", "getAvatarDecoration"), "useAvatarDecoration", "hideAvatarDecorations");
     add(find.byName("Nameplate", false), "default", "hideNameplates");
-    add(find.byTypeName("YouBarNameplate", false), "default", "hideNameplates", true);
+    add(find.byTypeName("YouBarNameplate", false), "default", "hideNameplates");
     add(find.byProps("useNameplate"), "useNameplate", "hideNameplates");
     add(find.byProps("usePreloadProfileEffect"), "default", "hideProfileEffects");
     add(find.byName("ProfileFrame", false), "default", "hideProfileFrames");
     add(find.byName("useProfileFrame", false), "default", "hideProfileFrames");
     for (const key of ["default", "GuildTagBadge", "BaseGuildTagChiplet"]) {
-        add(find.byProps("GuildTagBadge", "BaseGuildTagChiplet"), key, "hideGuildTags", true);
+        add(find.byProps("GuildTagBadge", "BaseGuildTagChiplet"), key, "hideGuildTags");
     }
     add(find.byName("useDisplayNameStyles", false), "default", "hideDisplayNameStyles");
     const individualPreview = find.byProps("IndividualProductPreview");
@@ -147,7 +149,10 @@ export function installProfileAndPaymentSurfaces(
         [find.byName("ProductDetailsActionSheet", false), "default"],
         [individualPreview, "IndividualProductPreview"],
         ...productPreviews,
-    ] as [any, string][];
+    ].map(([owner, key]) => {
+        const [slot, target] = getComponentPatchTarget(owner, key as string);
+        return [target, slot];
+    }) as [any, string][];
     const messages = find.byName("createMessageContent", false);
     const lists = find.byProps("toSettingListItems", "getScoredSettingListSearchResultItems");
     for (const [target, key] of [...targets, ...previewTargets, [messages, "default"], [lists, "toSettingListItems"], [lists, "getScoredSettingListSearchResultItems"]] as [any, string][]) {
@@ -158,16 +163,16 @@ export function installProfileAndPaymentSurfaces(
         const state = settings();
         if (state.hideGuildTags) {
             const primaryInfo = find.byProps("DisplayName", "ProfileBadgeRows");
-            const youBar = find.byProps("useIsYouBarGuildTagEnabled", "getIsYouBarGuildTagEnabled");
-            if (typeof primaryInfo?.default !== "function" || typeof youBar?.useIsYouBarGuildTagEnabled !== "function") {
+            const guildTags = find.byProps("useShouldDisplayGuildTag");
+            if (typeof primaryInfo?.default !== "function" || typeof guildTags?.useShouldDisplayGuildTag !== "function") {
                 throw new Error("Declutter: required guild tag surfaces are unavailable");
             }
 
             patches.push(instead("default", primaryInfo, (args, original) => removeElements(original(...args), element =>
                 typeof element.type === "function" && element.type.name === "GuildTag")));
-            patches.push(instead("useIsYouBarGuildTagEnabled", youBar, (args, original) => {
-                original(...args);
-                return false;
+            patches.push(instead("useShouldDisplayGuildTag", guildTags, (args, original) => {
+                const result = original(...args);
+                return preview.useIsPreview() ? result : false;
             }));
         }
 

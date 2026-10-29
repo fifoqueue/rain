@@ -1,9 +1,10 @@
 import { findAssetId } from "@api/assets";
-import { instead } from "@api/patcher";
+import { before, instead } from "@api/patcher";
 import { showToast } from "@api/ui/toasts";
 import { logger } from "@lib/utils/logger";
 import { findByProps, findByPropsLazy } from "@metro";
 import { clipboard } from "@metro/common";
+import { ChannelStore } from "@metro/common/stores";
 import { findByProps as findByPropsWrappers } from "@metro/wrappers";
 
 // For robust chat input manipulation
@@ -17,23 +18,7 @@ import { uploaderSettings } from "../storage";
 
 const CloudUpload = findByProps("CloudUpload")?.CloudUpload;
 const MessageSender = findByProps("sendMessage");
-const PendingMessages = findByProps("getPendingMessages", "deletePendingMessage");
-const FileUtils = findByPropsLazy("maxFileSize", "anyFileTooLarge");
-
-/** Cleans up any failed pending messages in the channel after an upload. */
-function cleanupPendingMessages(channelId: string) {
-    try {
-        const pending = PendingMessages?.getPendingMessages?.(channelId);
-        if (!pending) return;
-        for (const [messageId, message] of Object.entries(pending) as [string, any][]) {
-            if (message.state === "FAILED") {
-                PendingMessages.deletePendingMessage(channelId, messageId);
-            }
-        }
-    } catch (err) {
-        logger.warn("[Uploader] Failed to clean up pending messages:", err);
-    }
-}
+const FileUtils = findByPropsLazy("maxFileSize");
 
 export default function getUploaderPatch(): (() => boolean)[] {
     // Resolve getChatInputRef for robust chat input manipulation
@@ -47,14 +32,17 @@ export default function getUploaderPatch(): (() => boolean)[] {
         return [];
     }
 
-    const original = CloudUpload.prototype.reactNativeCompressAndExtractData;
+    const getDiscordLimit = FileUtils.maxFileSize;
 
-    CloudUpload.prototype.reactNativeCompressAndExtractData = async function (...args: any[]) {
+    const unpatch = instead("reactNativeCompressAndExtractData", CloudUpload.prototype, async function (this: any, args: any[], original: Function) {
         const file = this;
         const size: number = file?.preCompressionSize ?? 0;
         const readableSize = formatBytes(size);
 
         const { alwaysUpload, useHyperlink, selectedHost, userHash, uploadAction, litterboxDuration, ziplineServerURL, ziplineUserToken, ziplineDuration, ziplineFileNameFormat, ziplineDomain } = uploaderSettings;
+        const discordLimit = getDiscordLimit(ChannelStore.getChannel(file.channelId)?.guild_id);
+        if (!alwaysUpload && size <= discordLimit) return original(...args);
+
         let useHost = selectedHost;
 
         // Automatically fall back to Litterbox when the file is too large for Catbox (200 MB)
@@ -73,11 +61,6 @@ export default function getUploaderPatch(): (() => boolean)[] {
             showToast("File too large — Uguu max size is 128 MB.", findAssetId("CircleXIcon"));
             return null;
         }
-
-        const DISCORD_LIMIT = 8 * 1024 * 1024; // 8 MB (free tier)
-        const shouldUpload = alwaysUpload || size > DISCORD_LIMIT;
-
-        if (!shouldUpload) return original.apply(this, args);
 
         const hostLabel = useHost.charAt(0).toUpperCase() + useHost.slice(1);
         showToast(`Uploading ${readableSize} to ${hostLabel}...`, findAssetId("UploadIcon"));
@@ -109,7 +92,6 @@ export default function getUploaderPatch(): (() => boolean)[] {
         if (typeof file.setStatus === "function") file.setStatus("CANCELED");
         // Mark the file/message as canceled by uploader for MessageLogger
         if (file && typeof file === "object") file.__rainenhancements = "upload-canceled";
-        if (channelId) setTimeout(() => cleanupPendingMessages(channelId), 500);
 
         if (link) {
             const filename = file?.filename ?? "file";
@@ -162,7 +144,7 @@ export default function getUploaderPatch(): (() => boolean)[] {
                 }
             } else if (uploadAction === "nextmsg") {
                 // Fallback: use the pendingInsertLink patch
-                pendingInsertLink = content;
+                pendingInsertLink = { channelId, content };
                 showToast("Link will be appended to your next message.", findAssetId("toast_copy_link"));
             } else {
                 // Default: send immediately
@@ -187,12 +169,7 @@ export default function getUploaderPatch(): (() => boolean)[] {
         }
         // Always return null to signal completion to Discord
         return null;
-    };
-
-    const unpatch = () => {
-        CloudUpload.prototype.reactNativeCompressAndExtractData = original;
-        return true;
-    };
+    });
 
     // Patch sendMessage to support the "insert link" mode
     const sendMessagePatch = patchSendMessage();
@@ -200,29 +177,18 @@ export default function getUploaderPatch(): (() => boolean)[] {
     // Discord cancels oversized uploads before they ever reach the patch above
     const limitPatch = instead("maxFileSize", FileUtils, () => Number.MAX_SAFE_INTEGER);
 
-    return [unpatch, sendMessagePatch, limitPatch];
+    return [unpatch, sendMessagePatch, limitPatch, () => { pendingInsertLink = null; return true; }];
 }
 
 // Module-level variable to hold a pending link for the "insert" mode
-let pendingInsertLink: string | null = null;
+let pendingInsertLink: { channelId: string; content: string } | null = null;
 
 function patchSendMessage(): () => boolean {
-    const original = MessageSender?.sendMessage;
-    if (!original) return () => true;
-
-    MessageSender.sendMessage = function (...args: any[]) {
-        const message = args[1];
-        if (pendingInsertLink && message?.content !== undefined) {
-            message.content = message.content
-                ? `${message.content}\n${pendingInsertLink}`
-                : pendingInsertLink;
-            pendingInsertLink = null;
-        }
-        return original.apply(this, args);
-    };
-
-    return () => {
-        MessageSender.sendMessage = original;
-        return true;
-    };
+    return before("sendMessage", MessageSender, ([channelId, message]) => {
+        if (!pendingInsertLink || pendingInsertLink.channelId !== channelId || message?.content === undefined) return;
+        message.content = message.content
+            ? `${message.content}\n${pendingInsertLink.content}`
+            : pendingInsertLink.content;
+        pendingInsertLink = null;
+    });
 }

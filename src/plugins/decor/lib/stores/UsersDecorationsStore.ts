@@ -85,7 +85,7 @@ export const useUsersDecorationsStore = create<UsersDecorationsState>((set, get)
     }
 }));
 
-export const subscriptions = [
+export const subscribe = () => [
     subscribeToFluxDispatcher("LOAD_MESSAGES_SUCCESS", ({ messages }) => {
         useUsersDecorationsStore.getState().fetchMany(messages.map(m => m.author.id));
     }),

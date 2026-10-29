@@ -10,6 +10,8 @@ import { Contributors, Developers } from "@rain/Developers";
 import settings from "./settings";
 import { useChatBubblesSettings } from "./storage";
 
+const subscriptions: (() => void)[] = [];
+
 export default definePlugin({
     name: "ChatBubbles",
     description: "Adds customizable chat bubbles to the chat, similar to Flowercord",
@@ -54,11 +56,13 @@ export default definePlugin({
             "THEME_UPDATE",
         ]) {
             FluxDispatcher.subscribe(event, updateBubbleAppearance);
+            subscriptions.push(() => FluxDispatcher.unsubscribe(event, updateBubbleAppearance));
         }
 
-        useChatBubblesSettings.subscribe(updateBubbleAppearance);
+        subscriptions.push(useChatBubblesSettings.subscribe(updateBubbleAppearance));
     },
     stop() {
+        for (const unsubscribe of subscriptions.splice(0)) unsubscribe();
         BubbleModule?.unhookBubbles();
     },
     settings: settings

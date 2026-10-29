@@ -39,6 +39,7 @@ const useBadgesModule = findByNameLazy("useBadges", false);
 const badgesCache = new Map<string, Badge[]>();
 const badgeProps = new Map<string, Record<string, any>>();
 const pendingRequests = new Set<string>();
+const patches: (() => void)[] = [];
 
 export default definePlugin({
     name: Strings.PLUGIN__CORE_BADGES,
@@ -47,7 +48,7 @@ export default definePlugin({
     id: "badges",
     version: "1.1.0",
     start() {
-        onJsxCreate("ProfileBadge", (component, ret) => {
+        patches.push(onJsxCreate("ProfileBadge", (component, ret) => {
             if (ret.props.id?.startsWith("rain-")) {
                 const cachedProps = badgeProps.get(ret.props.id);
                 if (cachedProps) {
@@ -56,16 +57,16 @@ export default definePlugin({
                     ret.props.id = cachedProps.id;
                 }
             }
-        });
+        }));
 
-        onJsxCreate("RenderedBadge", (component, ret) => {
+        patches.push(onJsxCreate("RenderedBadge", (component, ret) => {
             if (ret.props.id?.startsWith("rain-")) {
                 const cachedProps = badgeProps.get(ret.props.id);
                 if (cachedProps) {
                     Object.assign(ret.props, cachedProps);
                 }
             }
-        });
+        }));
 
         const fetchAndProcessBadges = async (userId: string) => {
             if (pendingRequests.has(userId)) return;
@@ -120,7 +121,7 @@ export default definePlugin({
             }
         };
 
-        after("default", useBadgesModule, ([user], result) => {
+        patches.push(after("default", useBadgesModule, ([user], result) => {
             if (!user) return;
 
             const userId = user.userId;
@@ -128,7 +129,7 @@ export default definePlugin({
 
             if (!cached) {
                 if (!pendingRequests.has(userId)) {
-                    fetchAndProcessBadges(userId);
+                    fetchAndProcessBadges(userId).catch(error => console.error("Failed to load Rain badges", error));
                 }
                 return;
             }
@@ -142,6 +143,9 @@ export default definePlugin({
                     icon: " _",
                 });
             });
-        });
-    }
+        }));
+    },
+    stop() {
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
+    },
 });

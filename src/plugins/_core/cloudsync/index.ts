@@ -10,8 +10,8 @@ import { grabEverything } from "./lib/syncStuff";
 import { useCloudSyncSettings } from "./storage";
 import { useAuthorizationStore } from "./stores/AuthorizationStore";
 
-let syncTimeout: number;
-let unsubscribeSettings;
+let syncTimeout: ReturnType<typeof setTimeout> | undefined;
+let unsubscribeSettings: (() => void) | undefined;
 
 const autoSync = () => {
     if (syncTimeout) {
@@ -55,6 +55,13 @@ export default definePlugin({
         });
 
         FluxDispatcher.subscribe("RAIN_SETTING_UPDATED", autoSync);
+    },
+    stop() {
+        clearTimeout(syncTimeout);
+        syncTimeout = undefined;
+        unsubscribeSettings?.();
+        unsubscribeSettings = undefined;
+        FluxDispatcher.unsubscribe("RAIN_SETTING_UPDATED", autoSync);
     },
     settings: Settings,
 });

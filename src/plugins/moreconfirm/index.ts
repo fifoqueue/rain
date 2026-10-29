@@ -40,13 +40,16 @@ export default definePlugin({
 
     start() {
         patches.push(patcher.instead("handleStartCall", callManager, (args, orig) => {
-            const [{ rawRecipients: [{ username, discriminator }, multiple] }, isVideo] = args;
+            const [channel, isVideo] = args;
+            const recipient = UserStore.getUser(channel.getRecipientId?.() ?? channel.recipients?.[0]);
+            const name = recipient?.globalName ?? recipient?.username ?? "this user";
+            const multiple = (channel.recipients?.length ?? 0) > 1;
             const action = isVideo ? "video call" : "call";
 
             // if `multiple` is defined, it's probably a group call
             dialog.show({
-                title: multiple ? `Start a group ${action}?` : `Start a ${action} with ${username}#${discriminator}?`,
-                body: multiple ? "Are you sure you want to start the group call?" : `Are you sure you want to ${action} ${username}#${discriminator}?`,
+                title: multiple ? `Start a group ${action}?` : `Start a ${action} with ${name}?`,
+                body: multiple ? "Are you sure you want to start the group call?" : `Are you sure you want to ${action} ${name}?`,
                 confirmText: "Yes",
                 cancelText: "Cancel",
                 confirmColor: "brand",
@@ -61,37 +64,38 @@ export default definePlugin({
         }));
 
         patches.push(patcher.instead("addRelationship", relationshipManager, (args, orig) => {
-            if (typeof args[0] !== "object" || !args[0].userId) return orig.apply(this, args);
-            const { username, discriminator } = UserStore.getUser(args[0].userId);
+            if (!args[0] || typeof args[0] !== "object" || !args[0].userId) return orig.apply(this, args);
+            const user = UserStore.getUser(args[0].userId);
+            const name = user?.globalName ?? user?.username ?? args[0].userId;
 
             // This is hacky, but it *works*
             const hideASInterval = setInterval(() => actionSheetManager.hideActionSheet(), 100);
             setTimeout(() => clearInterval(hideASInterval), 3000);
 
             const block = args[0].type === 2;
-            return new Promise(r => {
+            return new Promise((resolve, reject) => {
                 dialog.show({
-                    title: `${block ? "Block" : "Friend"} ${username}#${discriminator}?`,
-                    body: `Are you sure you want to ${block ? "block" : "friend"} ${username}#${discriminator}?`,
+                    title: `${block ? "Block" : "Friend"} ${name}?`,
+                    body: `Are you sure you want to ${block ? "block" : "friend"} ${name}?`,
                     confirmText: "Yes",
                     cancelText: "Cancel",
                     confirmColor: "brand",
                     onConfirm: () => {
                         try {
-                            r(orig.apply(this, args));
+                            resolve(orig.apply(this, args));
                         } catch (e) {
-                            logger.error("Failed to add relationship", e);
+                            reject(e);
                         } finally {
                             clearInterval(hideASInterval);
                         }
                     },
-                    onCancel: () => void clearInterval(hideASInterval)
+                    onCancel: () => { clearInterval(hideASInterval); resolve(undefined); }
                 });
             });
         }));
     },
 
     stop() {
-        for (const unpatch of patches) unpatch();
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
     }
 });

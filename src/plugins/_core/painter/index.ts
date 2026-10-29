@@ -14,9 +14,9 @@ export default definePlugin({
     id: "painter",
     version: "1.0.0",
     async eagerStart() {
-        initThemes();
+        await initThemes();
 
         // todo: more this into initFonts
-        if (settings().safeMode) { initFonts(); }
+        if (!settings().safeMode) await initFonts();
     },
 });

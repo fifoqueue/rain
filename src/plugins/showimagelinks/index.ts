@@ -17,7 +17,7 @@ export default definePlugin({
         );
     },
     stop() {
-        for (const unpatch of patches) unpatch();
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
 
     },
 });

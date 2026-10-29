@@ -1,5 +1,6 @@
 import { findAssetId } from "@api/assets";
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { showSheet } from "@api/ui/sheets";
 import { findInReactTree } from "@lib/utils";
 import { findByName } from "@metro";
@@ -28,7 +29,7 @@ export default () => {
 
         if (innerUnpatch) innerUnpatch();
 
-        innerUnpatch = after("type", ret, (_, component) => {
+        innerUnpatch = after(...getComponentPatchTarget(ret, "type"), (_, component) => {
             const actions = findActionGroups(component);
             if (!actions) return;
 

@@ -32,15 +32,16 @@ export async function cFetch(
     const cache = useCacheStore.getState();
     const rawUrl = typeof url === "string" ? url : url.url;
 
-    const res = await fetch(url, init);
-
     let ret: string;
-    if (res.status !== 200) {
-        if (cache?.isCached?.(rawUrl)) ret = cache.readCache(rawUrl);
-        else throw new Error(`Failed to fetch ${rawUrl}`);
-    } else {
+    try {
+        const res = await fetch(url, init);
+        if (!res.ok) throw new Error(`Failed to fetch ${rawUrl}: ${res.status}`);
         ret = await res.text();
-        cache?.writeCache?.(rawUrl, ret);
+        if (format === "json") JSON.parse(ret);
+        cache.setIconpack(rawUrl, ret);
+    } catch (error) {
+        if (typeof cache.iconpacks[rawUrl] !== "string") throw error;
+        ret = cache.iconpacks[rawUrl];
     }
 
     if (format === "json") return JSON.parse(ret);

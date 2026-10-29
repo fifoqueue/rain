@@ -42,9 +42,9 @@ export default function unifyRainPlugin(
         isPlatformSupported: () => isPlatformSupported,
         arePredicatesMet: () => arePredicatesMet,
         devOnly: manifest.devOnly,
-        toggle(start: boolean) {
+        async toggle(start: boolean) {
             try {
-                start ? startPlugin(manifest.id) : stopPlugin(manifest.id);
+                await (start ? startPlugin(manifest.id) : stopPlugin(manifest.id));
             } catch (e) {
                 console.error(e);
             }

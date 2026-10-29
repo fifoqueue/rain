@@ -1,8 +1,10 @@
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { logger } from "@lib/utils/logger";
-import { chatInput, constants, messageActions, MessageView, replyActions } from "@metro/common";
+import { chatInput, constants, messageActions, replyActions } from "@metro/common";
 import { ChannelStore, MessageStore, PermissionsStore, SelectedChannelStore, UserStore } from "@metro/common/stores";
-import { findByNameLazy,findByPropsLazy } from "@metro/wrappers";
+import { getLazyContext } from "@metro/lazy";
+import { findByFilePathLazy, findByNameLazy,findByPropsLazy } from "@metro/wrappers";
 import { definePlugin } from "@plugins";
 import { Contributors } from "@rain/Developers";
 import React, { type ReactNode } from "react";
@@ -14,6 +16,7 @@ import type { MessageTapEvent, MessageViewProps } from "./types";
 
 let unpatch: (() => unknown) | undefined;
 let active = false;
+const Messages = findByFilePathLazy("modules/messages/native/Messages.tsx");
 
 const autocompleteUtils = findByPropsLazy("getMentionTextWithUser");
 const threadHooks = findByPropsLazy("computeIsReadOnlyThread");
@@ -145,13 +148,11 @@ export default definePlugin({
     async start() {
         if (unpatch) return;
 
-        if (typeof MessageView.type.render !== "function") {
-            logger.error("TapTap: Messages render target is unavailable");
-            return;
-        }
-
-        // Native props already hold the callbacks; patch them before the view renders.
-        unpatch = after("render", MessageView.type, (_args, result) => patchMessageView(result as ReactNode));
+        let unpatchRender: (() => void) | undefined;
+        const unsubscribe = getLazyContext(Messages)!.getExports(module => {
+            unpatchRender = after(...getComponentPatchTarget(module, "default"), (_args, result) => patchMessageView(result as ReactNode));
+        });
+        unpatch = () => { unsubscribe(); unpatchRender?.(); };
         active = true;
     },
 

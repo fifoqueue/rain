@@ -9,7 +9,7 @@ const { getCurrentUser } = UserStore;
 const BYPASSABLE = [3, 4]; // CHAT, GUILD_STICKER_RELATED_EMOJI
 
 function patchNitro(orig: Function, args: any[]) {
-    if (getCurrentUser?.().premiumType !== null)
+    if (getCurrentUser?.()?.premiumType)
         return orig(...args);
     return true;
 }
@@ -17,13 +17,13 @@ function patchNitro(orig: Function, args: any[]) {
 export default function getPatches() {
     return [
         instead("getEmojiUnavailableReason", emojiUtils, (args, origFunc) => {
-            if (getCurrentUser?.().premiumType !== null) return origFunc(...args);
+            if (getCurrentUser?.()?.premiumType) return origFunc(...args);
             if (BYPASSABLE.includes(args[0]?.intention)) return null;
             return origFunc(...args);
         }),
 
         after("getEmojiUnavailableReasons", emojiUtils, args => {
-            if (getCurrentUser?.().premiumType !== null) return;
+            if (getCurrentUser?.()?.premiumType) return;
             if (BYPASSABLE.includes(args[0]?.intention)) {
                 return {
                     emojisDisabled: new Set(),
@@ -36,7 +36,7 @@ export default function getPatches() {
         }),
 
         after("isEmojiPremiumLocked", emojiUtils, (args, result) => {
-            if (getCurrentUser?.().premiumType !== null) return;
+            if (getCurrentUser?.()?.premiumType) return;
             if (result === true && BYPASSABLE.includes(args[0]?.intention)) return false;
             return;
         }),

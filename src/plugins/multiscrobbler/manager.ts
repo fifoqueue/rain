@@ -101,6 +101,7 @@ class PluginManager {
             const lastTrack = await serviceFactory
                 .getCurrentService()
                 .fetchLatestScrobble();
+            if (pluginState.pluginStopped) return;
             setDebugInfo("lastTrack", lastTrack);
 
             if (!lastTrack.nowPlaying) {
@@ -390,6 +391,7 @@ class PluginManager {
                     });
             })
             .then(() => {
+                if (pluginState.pluginStopped) return;
                 const isLibreFm = currentSettings.service === "librefm";
                 const minInterval = isLibreFm
                     ? Constants.LIBREFM_MIN_UPDATE_INTERVAL

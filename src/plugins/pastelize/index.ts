@@ -44,7 +44,7 @@ function processMessage(
 ) {
     const member = GuildMemberStore.getMember(message.guildId, message.authorId);
 
-    if (message.content) {
+    if (Array.isArray(message.content)) {
         recurseNodeForMentions(message.content, message.guildId);
     }
 

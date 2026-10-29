@@ -63,7 +63,7 @@ export const useAuthorizationStore = create<AuthorizationStore>()(
     )
 );
 
-export const unsubscribe = subscribeToFluxDispatcher("CONNECTION_OPEN", () =>
+export const subscribe = () => subscribeToFluxDispatcher("CONNECTION_OPEN", () =>
     useAuthorizationStore.getState().init()
 );
 

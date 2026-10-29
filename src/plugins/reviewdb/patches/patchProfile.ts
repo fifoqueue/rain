@@ -1,4 +1,5 @@
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findInReactTree } from "@lib/utils";
 import { findByTypeName } from "@metro";
 import { React } from "@metro/common";
@@ -10,13 +11,13 @@ if (UserProfile === undefined)
     UserProfile = findByTypeName("UserProfileContent");
 
 export default () =>
-    after("type", UserProfile, (args, ret) => {
+    after(...getComponentPatchTarget({ component: UserProfile }, "component"), (args, ret) => {
         const profileSections = findInReactTree(
             ret,
             r =>
                 r?.type?.displayName === "View" &&
                 // UserProfileBio still exists even when the user has no bio. Yep.
-                r?.props?.children.findIndex(
+                Array.isArray(r?.props?.children) && r.props.children.findIndex(
                     (i: any) =>
                         i?.type?.name === "UserProfileBio" ||
                         i?.type?.name === "UserProfileAboutMeCard",

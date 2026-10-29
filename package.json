@@ -1,12 +1,13 @@
 {
   "name": "rain",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "private": true,
   "author": {
     "name": "cocobo1",
     "url": "https://cocobo1.dev"
   },
   "scripts": {
+    "test": "bun test --isolate",
     "build": "node scripts/build.mjs",
     "serve": "node scripts/serve.mjs",
     "lint": "eslint ./src --fix"

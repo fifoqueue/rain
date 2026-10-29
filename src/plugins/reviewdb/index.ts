@@ -23,16 +23,16 @@ export default definePlugin({
     id: "reviewdb",
     version: "1.0.0",
     async start() {
-        waitForHydration(useReviewDBSettings);
+        await waitForHydration(useReviewDBSettings);
         patches.push(patchProfile());
         patches.push(patchServer());
         patches.push(patchContextMenu());
         patches.push(patchSegmentedProfile());
 
-        getAdmins().then(i => admins.push(...i));
+        getAdmins().then(i => admins.splice(0, admins.length, ...i)).catch(error => console.error("ReviewDB: failed to load admins", error));
     },
     stop() {
-        for (const unpatch of patches) unpatch();
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
     },
     settings: Settings,
 });

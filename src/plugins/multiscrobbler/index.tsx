@@ -16,21 +16,24 @@ export { currentSettings,pluginState };
 let connectionAttempts = 0;
 const MAX_CONNECTION_ATTEMPTS = 3;
 const RECONNECT_DELAY = 5000;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
+let waitForUser: (() => void) | undefined;
 
 async function tryInitialize() {
+    if (pluginState.pluginStopped) return;
     try {
-        initialize();
+        await initialize();
         connectionAttempts = 0;
         logger.verbose("[Multi-Scrobbler] Successfully connected");
     } catch (error) {
         logger.error("[Multi-Scrobbler] Initialization error:", error);
         connectionAttempts++;
 
-        if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
+        if (!pluginState.pluginStopped && connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
             logger.verbose(
                 `[Multi-Scrobbler] Retrying connection... (attempt ${connectionAttempts})`,
             );
-            setTimeout(tryInitialize, RECONNECT_DELAY);
+            retryTimer = setTimeout(tryInitialize, RECONNECT_DELAY);
         } else {
             logger.error(
                 "[Multi-Scrobbler] Failed to connect after multiple attempts",
@@ -40,6 +43,7 @@ async function tryInitialize() {
 }
 
 async function validateAndInitialize() {
+    if (pluginState.pluginStopped) return;
     if (!currentSettings.service) {
         logger.verbose("[Multi-Scrobbler] No service selected. Please configure a service in settings.");
         return;
@@ -77,10 +81,11 @@ async function validateAndInitialize() {
     if (UserStore.getCurrentUser()) {
         tryInitialize();
     } else {
-        const waitForUser = () => {
+        waitForUser = () => {
             if (UserStore.getCurrentUser()) {
                 tryInitialize();
-                FluxDispatcher.unsubscribe("CONNECTION_OPEN", waitForUser);
+                FluxDispatcher.unsubscribe("CONNECTION_OPEN", waitForUser!);
+                waitForUser = undefined;
             }
         };
 
@@ -99,13 +104,16 @@ export default definePlugin({
         logger.log("[Multi-Scrobbler] Loading...");
         pluginState.pluginStopped = false;
 
-        waitForHydration(useMultiScrobblerSettings).then(validateAndInitialize);
+        connectionAttempts = 0;
+        return waitForHydration(useMultiScrobblerSettings).then(validateAndInitialize);
     },
 
     stop() {
         logger.log("[Multi-Scrobbler] Unloading...");
-        pluginState.pluginStopped = true;
-
+        clearTimeout(retryTimer);
+        retryTimer = undefined;
+        if (waitForUser) FluxDispatcher.unsubscribe("CONNECTION_OPEN", waitForUser);
+        waitForUser = undefined;
         stop();
     },
 

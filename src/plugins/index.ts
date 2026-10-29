@@ -10,6 +10,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import * as t from "./types";
 
 export const pluginInstances = new Map<string, t.rainPlugin>();
+const startedStages = new Set<string>();
+const pendingStarts = new Map<string, Promise<void>>();
 let _setupPromise: Promise<void> | null = null;
 
 // these are the things we use to set how quickly plugins start
@@ -65,6 +67,8 @@ function assert<T>(condition: T, id: string, attempt: string): asserts condition
 async function runPluginLifecycle(id: string, method: "start" | "eagerStart"): Promise<void> {
     const instance = pluginInstances.get(id);
     assert(instance, id, `run ${method} on unknown plugin`);
+    const stage = `${id}:${method}`;
+    if (startedStages.has(stage) || !instance[method]) return;
 
     if (!isPluginAvailable(id)) {
         logger.log(`[${id}] Skipped because it is unavailable`);
@@ -78,24 +82,43 @@ async function runPluginLifecycle(id: string, method: "start" | "eagerStart"): P
     }
 
     try {
-        await instance[method]?.();
+        await instance[method]();
+        startedStages.add(stage);
         usePluginSettings.getState().updatePluginSetting(id, true);
     } catch (error) {
+        try { await instance.stop?.(); }
+        catch (cleanupError) { logger.error(`[${id}] Failed to clean up:`, cleanupError); }
+        startedStages.delete(`${id}:start`);
+        startedStages.delete(`${id}:eagerStart`);
+        usePluginSettings.getState().updatePluginSetting(id, false);
         const errorMsg = `[${id}] Failed: ${error}`;
         method === "start" ? showToast(errorMsg) : console.error(errorMsg, error);
         throw error;
     }
 }
 
-export const startPlugin = (id: string): Promise<void> => runPluginLifecycle(id, "start");
+export function startPlugin(id: string): Promise<void> {
+    const pending = pendingStarts.get(id);
+    if (pending) return pending;
+
+    const start = (async () => {
+        await runPluginLifecycle(id, "eagerStart");
+        await runPluginLifecycle(id, "start");
+    })().finally(() => pendingStarts.delete(id));
+    pendingStarts.set(id, start);
+    return start;
+}
 export const startEagerPlugin = (id: string): Promise<void> => runPluginLifecycle(id, "eagerStart");
 
 export async function stopPlugin(id: string): Promise<void> {
+    await pendingStarts.get(id)?.catch(() => {});
     const instance = pluginInstances.get(id);
     assert(instance, id, "stop a non-started plugin");
 
     try {
         await instance.stop?.();
+        startedStages.delete(`${id}:start`);
+        startedStages.delete(`${id}:eagerStart`);
         usePluginSettings.getState().updatePluginSetting(id, false);
     } catch (error) {
         console.error(`[${id}] Failed to stop:`, error);

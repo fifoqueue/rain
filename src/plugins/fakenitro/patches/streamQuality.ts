@@ -6,7 +6,7 @@ const PremiumUtils = findByProps("canUseHighVideoUploadQuality", "canStreamQuali
 const { getCurrentUser } = UserStore;
 
 function patchPremium(orig: Function, args: any[]) {
-    if (getCurrentUser?.().premiumType !== null)
+    if (getCurrentUser?.()?.premiumType)
         return orig(...args);
     return true;
 }

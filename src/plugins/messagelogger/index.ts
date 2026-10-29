@@ -5,8 +5,9 @@ import { findByName, findByProps } from "@metro";
 import { MessageStore, UserStore } from "@metro/common/stores";
 import { definePlugin } from "@plugins";
 import { Contributors, Developers } from "@rain/Developers";
+import { Image } from "react-native";
 
-import { addLogEntry, clearLogs, repairCorruptedLogs } from "./database";
+import { addLogEntry, clearLogs } from "./database";
 import Settings from "./settings";
 import { useMessageLoggerSettings } from "./storage";
 
@@ -19,7 +20,7 @@ function logToDatabase(message: any, type: "DELETE" | "UPDATE") {
         timestamp: new Date().toISOString(),
         type,
         messageId: message.id,
-        channelId: message.channelId,
+        channelId: message.channelId ?? message.channel_id,
         author: {
             id: message.author?.id,
             username: message.author?.username,
@@ -29,7 +30,7 @@ function logToDatabase(message: any, type: "DELETE" | "UPDATE") {
         content: message.content,
         attachments: message.attachments?.map((a: any) => a.url) || []
     };
-    addLogEntry(logEntry);
+    addLogEntry(logEntry).catch(error => console.error("MessageLogger: failed to save log", error));
 }
 
 function isBot(author: any): boolean {
@@ -235,7 +236,7 @@ function patchRowManager() {
                         data.buttons.push(
                             React.createElement(FormRow, {
                                 label: "Remove Edit History",
-                                leading: React.createElement("img", { style: { opacity: 1 }, src: findAssetId("ic_edit_24px") }),
+                                leading: React.createElement(Image, { style: { width: 24, height: 24 }, source: findAssetId("ic_edit_24px") }),
                                 onPress: () => {
                                     try {
                                         const Edited = EDIT_HISTORY_SEPARATOR + "\n\n";
@@ -308,9 +309,8 @@ export default definePlugin({
     id: "messagelogger",
     version: "2.0.0",
     settings: Settings,
-    start() {
-        clearLogs();
-        repairCorruptedLogs();
+    async start() {
+        await clearLogs();
         patches.push(patchDeleteAction());
         patches.push(patchMessageDeleteHandler());
         patches.push(patchMessageEditHandler());

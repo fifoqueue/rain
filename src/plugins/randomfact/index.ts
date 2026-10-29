@@ -23,7 +23,7 @@ export default definePlugin({
         unregisters.push(registerCommand(factCommand()));
     },
     stop() {
-        unregisters.forEach(unregister => unregister());
+        unregisters.splice(0).forEach(unregister => unregister());
     }
 });
 
@@ -50,7 +50,7 @@ const factCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[RandomFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch random fact", 3000);
+            showToast("Failed to fetch random fact");
         }
     },
 });

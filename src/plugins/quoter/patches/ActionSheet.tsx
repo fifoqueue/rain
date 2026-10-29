@@ -1,10 +1,10 @@
 import { findAssetId } from "@api/assets";
-import { after, before } from "@api/patcher";
 import { semanticColors } from "@api/ui/components/color";
+import { afterLazySheet } from "@api/ui/sheets";
 import { findInReactTree } from "@lib/utils";
 import { logger } from "@lib/utils/logger";
-import { React, ReactNative } from "@metro/common";
-import { Forms } from "@metro/common/components";
+import { React } from "@metro/common";
+import { ActionSheetRow as BaseActionSheetRow, Forms } from "@metro/common/components";
 import { findByPropsLazy } from "@metro/wrappers";
 
 import { openQuoteModal } from "../components/QuotePreview";
@@ -45,23 +45,7 @@ function injectQuoteRow(sheet: any, message: any) {
         const quoteButton = (
             <ActionSheetRow
                 label="Quote"
-                icon={templateIcon
-                    ? {
-                        $$typeof: templateIcon.$$typeof,
-                        type: templateIcon.type,
-                        key: null,
-                        ref: null,
-                        props: {
-                            IconComponent: () => (
-                                <ReactNative.Image
-                                    resizeMode="cover"
-                                    style={styles.iconComponent}
-                                    source={icon}
-                                />
-                            ),
-                        },
-                    }
-                    : undefined}
+                icon={<BaseActionSheetRow.Icon source={icon} />}
                 onPress={onPress}
                 key="quoter"
             />
@@ -101,23 +85,6 @@ function injectQuoteRow(sheet: any, message: any) {
     }
 }
 
-export default () => before("openLazy", LazyActionSheet, ([component, key, msg]) => {
-    const message = msg?.message;
-    if (key !== "MessageLongPressActionSheet" || !message?.content) return;
-
-    Promise.resolve(component).then((instance: any) => {
-        if (!instance || typeof instance.default !== "function") return;
-
-        const unpatch = after("default", instance, (_, sheet) => {
-            React.useEffect(() => () => { unpatch(); }, []);
-
-            // Never let an unexpected sheet shape crash the whole action
-            // sheet — worst case the Quote row is simply not added.
-            try {
-                injectQuoteRow(sheet, message);
-            } catch (error) {
-                logger.error("[Quoter] Failed to inject Quote row:", error);
-            }
-        });
-    }).catch(() => { });
+export default () => afterLazySheet("MessageLongPressActionSheet", ([props], sheet) => {
+    if (props?.message?.content) injectQuoteRow(sheet, props.message);
 });

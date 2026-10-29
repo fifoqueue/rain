@@ -1,4 +1,5 @@
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findInReactTree } from "@lib/utils";
 import { logger } from "@lib/utils/logger";
 import { findByFilePathLazy } from "@metro";
@@ -34,8 +35,7 @@ export default function patchChatBackground() {
     try {
         const patches: (() => void)[] = [];
         const unsubscribe = getLazyContext(Messages)!.getExports(module => {
-            const isFunction = typeof module.default === "function";
-            patches.push(after(isFunction ? "default" : "render", isFunction ? module : module.default, (_, ret) => {
+            patches.push(after(...getComponentPatchTarget(module, "default"), (_, ret) => {
                 if (!_colorRef.current || !_colorRef.current.background?.url) return;
                 const messagesComponent = findInReactTree(
                     ret,

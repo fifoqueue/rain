@@ -27,7 +27,7 @@ export default definePlugin({
 
         const badgeProps = {} as Record<string, BadgeProps>;
 
-        onJsxCreate("ProfileBadge", (component, ret) => {
+        patches.push(onJsxCreate("ProfileBadge", (component, ret) => {
             if (ret.props.id?.startsWith("gb-")) {
                 const badgePropsCache = badgeProps[ret.props.id];
                 if (badgePropsCache) {
@@ -36,16 +36,16 @@ export default definePlugin({
                     ret.props.id = badgePropsCache.id;
                 }
             }
-        });
+        }));
 
-        onJsxCreate("RenderBadge", (component, ret) => {
+        patches.push(onJsxCreate("RenderBadge", (component, ret) => {
             if (ret.props.id?.startsWith("gb-")) {
                 const badgePropsCache = badgeProps[ret.props.id];
                 if (badgePropsCache) {
                     Object.assign(ret.props, badgePropsCache);
                 }
             }
-        });
+        }));
 
         patches.push(
             after("default", useBadgesModule, ([user], result) => {

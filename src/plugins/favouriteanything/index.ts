@@ -1,11 +1,12 @@
-import { after, instead } from "@api/patcher";
+import { before, instead } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { logger } from "@lib/utils/logger";
 import { findByProps } from "@metro";
 import { findByFilePathLazy } from "@metro/wrappers";
 import { definePlugin } from "@plugins";
 import { Contributors,Developers } from "@rain/Developers";
 
-const GIFFavButton = findByFilePathLazy("modules/media_viewer/native/components/overlay/MediaViewerOverlayButtonFavoriteGIF.tsx", true);
+const GIFFavButton = findByFilePathLazy("modules/media_viewer/native/components/overlay/MediaViewerOverlayButtonFavoriteGIF.tsx");
 
 let unpatchGIFFavButton: (() => void) | null = null;
 let unpatchAddFavorite: (() => void) | null = null;
@@ -53,7 +54,7 @@ function patchAddFavorite() {
         const favModule = findByProps("addFavoriteGIF");
         if (!favModule) return;
 
-        unpatchAddFavorite = after("addFavoriteGIF", favModule, args => {
+        unpatchAddFavorite = before("addFavoriteGIF", favModule, args => {
             try {
                 const data = args[0];
                 if (!data || typeof data !== "object") return;
@@ -133,7 +134,7 @@ export default definePlugin({
     version: "1.0.0",
     start() {
         try {
-            unpatchGIFFavButton = instead("type", GIFFavButton, (args: any[], original: any) => {
+            unpatchGIFFavButton = instead(...getComponentPatchTarget(GIFFavButton, "default"), (args: any[], original: any) => {
                 try {
                     const props = args?.[0] ?? {};
                     if (props?.source && !props.source.isGIFV) {

@@ -1,6 +1,7 @@
 import { before } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findInReactTree } from "@lib/utils";
-import { findByDisplayName } from "@metro";
+import { findByProps } from "@metro";
 import { constants } from "@metro/common";
 import { definePlugin } from "@plugins";
 import { Contributors, Developers } from "@rain/Developers";
@@ -38,14 +39,8 @@ export default definePlugin({
             },
         });
 
-        const PressableModule = findByDisplayName("Pressable", false) ?? findByDisplayName("Pressable");
-        const Pressable = PressableModule?.default ?? PressableModule;
-
-        if (!Pressable) return;
-
-        const target = Pressable.type ? Pressable : (Pressable.default ?? Pressable);
-
-        unpatch = before("type", target, args => {
+        const PressableModule = findByProps("Pressable", "View");
+        unpatch = before(...getComponentPatchTarget(PressableModule, "Pressable"), args => {
             if (!args || !args[0]) return;
 
             const [props] = args;

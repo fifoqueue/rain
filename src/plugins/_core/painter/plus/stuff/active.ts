@@ -1,14 +1,14 @@
 import { React } from "@metro/common";
 
 import { InactiveReason,PatchType } from "..";
-import type { IconpackData } from "../types";
+import type { Iconpack } from "../types";
 
 export const state = {
     loading: true,
     active: false,
     iconpack: {
         iconpack: undefined as any,
-        list: [] as IconpackData[],
+        list: [] as Iconpack[],
         hashes: {} as Record<string, string>,
     },
     patches: [] as PatchType[],

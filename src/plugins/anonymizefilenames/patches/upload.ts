@@ -1,3 +1,4 @@
+import { before } from "@api/patcher";
 import { findByProps } from "@metro";
 
 import { anonymizeSettings } from "../storage";
@@ -23,23 +24,9 @@ function buildName(original: string): string {
 export default function getUploadPatch() {
     if (!CloudUpload?.prototype?.reactNativeCompressAndExtractData) return [];
 
-    const original = CloudUpload.prototype.reactNativeCompressAndExtractData;
-
-    CloudUpload.prototype.reactNativeCompressAndExtractData = function (...args: any[]) {
-        if (
-            this?.item &&
-            typeof this.item.filename === "string" &&
-            this.item.filename.length > 0
-        ) {
+    return [before("reactNativeCompressAndExtractData", CloudUpload.prototype, function (this: any) {
+        if (typeof this.item?.filename === "string" && this.item.filename.length > 0) {
             this.item.filename = buildName(this.item.filename);
         }
-        return original.apply(this, args);
-    };
-
-    return [
-        () => {
-            CloudUpload.prototype.reactNativeCompressAndExtractData = original;
-            return true;
-        },
-    ];
+    })];
 }

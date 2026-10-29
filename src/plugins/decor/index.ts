@@ -6,9 +6,9 @@ import { definePlugin } from "@plugins";
 import { Contributors, Developers } from "@rain/Developers";
 
 import { CDN_URL, RAW_SKU_ID, SKU_ID } from "./lib/constants";
-import { unsubscribe } from "./lib/stores/AuthorizationStore";
-import { subscriptions as CurrentUserDecorationsStoreSubscriptions, useCurrentUserDecorationsStore } from "./lib/stores/CurrentUserDecorationsStore";
-import { subscriptions as UserDecorationsStoreSubscriptions, useUsersDecorationsStore } from "./lib/stores/UsersDecorationsStore";
+import { subscribe } from "./lib/stores/AuthorizationStore";
+import { subscribe as subscribeCurrentUserDecorations, useCurrentUserDecorationsStore } from "./lib/stores/CurrentUserDecorationsStore";
+import { subscribe as subscribeUserDecorations, useUsersDecorationsStore } from "./lib/stores/UsersDecorationsStore";
 import Settings from "./ui/pages/Settings";
 
 const ImageResolver = findByProps("getAvatarDecorationURL", "default");
@@ -22,14 +22,15 @@ export default definePlugin({
     id: "decor",
     version: "1.0.0",
     async eagerStart() {
-        patches.push(unsubscribe);
-        patches.push(...UserDecorationsStoreSubscriptions);
-        patches.push(...CurrentUserDecorationsStoreSubscriptions);
+        patches.push(subscribe());
+        patches.push(...subscribeUserDecorations());
+        patches.push(...subscribeCurrentUserDecorations());
         patches.push(
             after("getUser", UserStore, (_, user) => {
 
                 const store = useUsersDecorationsStore.getState();
                 if (user && store.has(user.id)) {
+                    user = Object.assign(Object.create(Object.getPrototypeOf(user)), user);
                     const decoration = store.get(user.id);
 
                     if (decoration && user.avatarDecoration?.skuId !== SKU_ID) {
@@ -42,6 +43,7 @@ export default definePlugin({
                     }
 
                     user.avatarDecorationData = user.avatarDecoration;
+                    return user;
                 }
             })
         );

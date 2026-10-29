@@ -32,7 +32,7 @@ export default definePlugin({
         unregisters.push(registerCommand(birdFactCommand()));
     },
     stop() {
-        unregisters.forEach(unregister => unregister());
+        unregisters.splice(0).forEach(unregister => unregister());
     }
 });
 
@@ -59,7 +59,7 @@ const catFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[CatFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch cat fact", 3000);
+            showToast("Failed to fetch cat fact");
         }
     },
 });
@@ -87,7 +87,7 @@ const dogFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[DogFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch dog fact", 3000);
+            showToast("Failed to fetch dog fact");
         }
     },
 });
@@ -115,7 +115,7 @@ const duckFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[DuckFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch duck fact", 3000);
+            showToast("Failed to fetch duck fact");
         }
     },
 });
@@ -143,7 +143,7 @@ const foxFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[FoxFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch fox fact", 3000);
+            showToast("Failed to fetch fox fact");
         }
     },
 });
@@ -171,7 +171,7 @@ const pandaFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[PandaFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch panda fact", 3000);
+            showToast("Failed to fetch panda fact");
         }
     },
 });
@@ -199,7 +199,7 @@ const birdFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[BirdFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch bird fact", 3000);
+            showToast("Failed to fetch bird fact");
         }
     },
 });
@@ -227,7 +227,7 @@ const koalaFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[KoalaFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch koala fact", 3000);
+            showToast("Failed to fetch koala fact");
         }
     },
 });
@@ -255,7 +255,7 @@ const racoonFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[RacoonFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch racoon fact", 3000);
+            showToast("Failed to fetch racoon fact");
         }
     },
 });
@@ -283,7 +283,7 @@ const whaleFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[WhaleFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch whale fact", 3000);
+            showToast("Failed to fetch whale fact");
         }
     },
 });
@@ -311,7 +311,7 @@ const kangarooFactCommand = (): RainApplicationCommand => ({
         } catch (error) {
             console.error("[KangarooFact] Error:", error);
             // Show toast on error
-            showToast("Failed to fetch kangaroo fact", 3000);
+            showToast("Failed to fetch kangaroo fact");
         }
     },
 });

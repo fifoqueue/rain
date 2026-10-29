@@ -19,9 +19,12 @@ const prepareSound = () =>
             resolve(meta)
         )
     );
-let playingTimeout: number | null = null;
+let playingTimeout: ReturnType<typeof setTimeout> | null = null;
+const queuedSounds = new Set<ReturnType<typeof setTimeout>>();
+let active = false;
 let playing = false;
 async function playSound() {
+    if (!active || !soundPrepared) return;
     if (playing) {
         if (playingTimeout != null) clearTimeout(playingTimeout);
         DCDSoundManager.stop(SOUND_ID);
@@ -48,7 +51,8 @@ function onMessage(event: any) {
         count += (content.match(/<a?:\w+:\d+>/gi)?.filter((e: string) => /moyai/i.test(e)) ?? []).length;
         if (count > 0) {
             for (let i = 0; i < count; i++) {
-                setTimeout(playSound, i * 350);
+                const timer = setTimeout(() => { queuedSounds.delete(timer); playSound(); }, i * 350);
+                queuedSounds.add(timer);
             }
         }
     }
@@ -58,7 +62,7 @@ function onReaction(event: any) {
     if (
         (useMoyaiSettings.getState().allowReactions ?? true) &&
         event.channelId === SelectedChannelStore.getChannelId() &&
-        (event.emoji.name === "🗿" || event.emoji.name.match(/.*?moy?ai.*?/i)) &&
+        (event.emoji?.name === "🗿" || event.emoji?.name?.match(/.*?moy?ai.*?/i)) &&
         !event.optimistic
     ) {
         playSound();
@@ -74,16 +78,24 @@ export default definePlugin({
     id: "moyai",
     version: "1.0.0",
     start() {
+        active = true;
         if (!soundPrepared) {
             prepareSound().then((meta: Record<string, number>) => {
                 soundPrepared = true;
                 SOUND_DURATION = meta.duration;
-            });
+            }).catch(error => console.error("Moyai: failed to prepare sound", error));
         }
         FluxDispatcher.subscribe("MESSAGE_CREATE", onMessage);
         FluxDispatcher.subscribe("MESSAGE_REACTION_ADD", onReaction);
     },
     stop() {
+        active = false;
+        for (const timer of queuedSounds) clearTimeout(timer);
+        queuedSounds.clear();
+        if (playingTimeout !== null) clearTimeout(playingTimeout);
+        playingTimeout = null;
+        if (playing) DCDSoundManager.stop(SOUND_ID);
+        playing = false;
         FluxDispatcher.unsubscribe("MESSAGE_CREATE", onMessage);
         FluxDispatcher.unsubscribe("MESSAGE_REACTION_ADD", onReaction);
     },

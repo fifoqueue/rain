@@ -1,9 +1,10 @@
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { showConfirmationAlert } from "@api/ui/alerts";
 import { showToast } from "@api/ui/toasts";
 import { findInReactTree } from "@lib/utils";
 import { findByProps } from "@metro";
-import { ActionSheet, ActionSheetRow } from "@metro/common/components";
+import { ActionSheetRow } from "@metro/common/components";
 import { definePlugin } from "@plugins";
 import { Developers } from "@rain/Developers";
 import { ReactElement } from "react";
@@ -19,13 +20,12 @@ export default definePlugin({
     version: "1.0.0",
     start() {
         patches.push(
-            after("render", ActionSheet, (args, res) => {
+            after(...getComponentPatchTarget(findByProps("ActionSheet"), "ActionSheet"), (args, res) => {
                 const dangerGroup: ReactElement<any> = findInReactTree(res, x => x?.key === "gdm-destructive");
                 if (!dangerGroup) return res;
 
                 const children: Array<any> = React.Children.toArray(dangerGroup.props.children);
-                const leaveRow = dangerGroup.props.children.find((c: any) => c?.props?.variant === "danger");
-                console.log(leaveRow);
+                const leaveRow = children.find((c: any) => c?.props?.variant === "danger");
                 const leaveIcon = leaveRow?.props?.icon?.props?.IconComponent;
 
                 const props = args[0];
@@ -75,6 +75,6 @@ export default definePlugin({
 
     },
     stop() {
-        for (const unpatch of patches) unpatch();
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
     },
 });

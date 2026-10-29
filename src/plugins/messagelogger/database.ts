@@ -2,6 +2,13 @@ import { fileExists, readFile, writeFile } from "@api/native/fs";
 
 const LOG_FILE = "public/message_logs.json";
 const MAX_LOGS = 1000;
+let writeQueue: Promise<void> = Promise.resolve();
+
+function enqueueWrite(write: () => Promise<void>): Promise<void> {
+    const result = writeQueue.then(write);
+    writeQueue = result.catch(() => {});
+    return result;
+}
 
 export interface MessageLogEntry {
     timestamp: string;
@@ -23,19 +30,6 @@ interface LogData {
     logs: MessageLogEntry[];
 }
 
-async function safeParseJSON<T>(data: string | null, fallback: T): Promise<T> {
-    if (!data) return fallback;
-    try {
-        const parsed = JSON.parse(data);
-        if (Array.isArray(parsed)) {
-            return parsed as T;
-        }
-        return fallback;
-    } catch {
-        return fallback;
-    }
-}
-
 async function writeLogData(data: LogData): Promise<void> {
     const content = JSON.stringify(data);
     await writeFile(LOG_FILE, content);
@@ -46,24 +40,25 @@ async function readLogData(): Promise<LogData> {
     if (!exists) return { version: 1, logs: [] };
 
     const content = await readFile(LOG_FILE);
-    const parsed = await safeParseJSON<LogData | MessageLogEntry[]>(content, { version: 1, logs: [] });
+    const parsed = JSON.parse(content);
 
     if (Array.isArray(parsed)) {
         return { version: 1, logs: parsed };
     }
 
-    return parsed;
+    if (parsed?.version === 1 && Array.isArray(parsed.logs)) return parsed;
+    throw new Error("Invalid message log format; existing data was preserved");
 }
 
-export async function addLogEntry(entry: MessageLogEntry): Promise<void> {
-    const data = await readLogData();
+export function addLogEntry(entry: MessageLogEntry): Promise<void> {
+    return enqueueWrite(async () => {
+        const data = await readLogData();
 
-    if (data.logs.length >= MAX_LOGS) {
-        data.logs.shift();
-    }
+        if (data.logs.length >= MAX_LOGS) data.logs.shift();
 
-    data.logs.push(entry);
-    await writeLogData(data);
+        data.logs.push(entry);
+        await writeLogData(data);
+    });
 }
 
 export async function getLogEntries(
@@ -74,6 +69,7 @@ export async function getLogEntries(
     },
     limit = 100
 ): Promise<MessageLogEntry[]> {
+    await writeQueue;
     const data = await readLogData();
     let entries = data.logs;
 
@@ -91,42 +87,11 @@ export async function getLogEntries(
 }
 
 export async function getLogEntry(messageId: string): Promise<MessageLogEntry | null> {
+    await writeQueue;
     const data = await readLogData();
     return data.logs.find(e => e.messageId === messageId) ?? null;
 }
 
 export async function clearLogs(): Promise<void> {
-    await writeLogData({ version: 1, logs: [] });
-}
-
-export async function repairCorruptedLogs(): Promise<boolean> {
-    try {
-        const exists = await fileExists(LOG_FILE);
-        if (!exists) return true;
-
-        const content = await readFile(LOG_FILE);
-        const parsed = await safeParseJSON<LogData | MessageLogEntry[]>(content, { version: 1, logs: [] });
-
-        let logs: MessageLogEntry[];
-        if (Array.isArray(parsed)) {
-            logs = parsed;
-        } else {
-            logs = parsed.logs;
-        }
-
-        const validLogs = logs.filter((log: MessageLogEntry) => {
-            return (
-                log &&
-                typeof log.messageId === "string" &&
-                typeof log.channelId === "string" &&
-                typeof log.timestamp === "string" &&
-                typeof log.type === "string"
-            );
-        });
-
-        await writeLogData({ version: 1, logs: validLogs });
-        return true;
-    } catch {
-        return false;
-    }
+    await enqueueWrite(() => writeLogData({ version: 1, logs: [] }));
 }

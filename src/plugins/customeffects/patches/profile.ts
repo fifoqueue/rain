@@ -13,15 +13,13 @@ export const patchGetUserProfile = () =>
         const customEffect = userEffectData[profile.userId];
         if (!customEffect) return profile;
 
-        profile.profileEffect = { skuId: customEffect.skuId };
-        return profile;
+        return { ...profile, profileEffect: { skuId: customEffect.skuId } };
     });
 
 export const patchGetAllProfileEffects = () =>
     after("getProfileEffects", ProfileEffects, (_args: unknown[], effects: any[]) => {
         const known = new Set(effects.map(effect => effect.skuId));
-        effects.push(...[...Object.values(customEffects), ...userEffects].filter(effect => !known.has(effect.skuId)));
-        return effects;
+        return [...effects, ...[...Object.values(customEffects), ...userEffects].filter(effect => !known.has(effect.skuId))];
     });
 
 export const patchGetProfileEffect = () =>

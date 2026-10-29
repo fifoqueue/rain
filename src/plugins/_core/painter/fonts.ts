@@ -206,8 +206,8 @@ export async function initFonts() {
 
     const currentFonts = useFonts.getState().fonts;
 
-    Promise.allSettled(
-        Object.keys(currentFonts).map(
+    await Promise.allSettled(
+        Object.keys(currentFonts).filter(name => name !== "__selected").map(
             name => saveFont(currentFonts[name], currentFonts.__selected === name)
         )
     );

@@ -49,7 +49,9 @@ export function createUserPFPPatcher(onEnabled: () => boolean) {
                 const ext = data.avatars[args[0]] && urlExt(data.avatars[args[0]]);
                 if (ext === "gif" && ret) {
                     const avatar = ret.avatar ?? "0";
-                    ret.avatar = !avatar.startsWith("a_") ? `a_${avatar}` : avatar;
+                    return Object.assign(Object.create(Object.getPrototypeOf(ret)), ret, {
+                        avatar: !avatar.startsWith("a_") ? `a_${avatar}` : avatar,
+                    });
                 }
                 return ret;
             }),

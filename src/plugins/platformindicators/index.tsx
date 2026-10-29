@@ -1,11 +1,13 @@
 import { findAssetId } from "@api/assets";
 import { after, before } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { waitForHydration } from "@api/storage";
 import { findInReactTree } from "@lib/utils";
 import { findByName,findByProps, findByTypeName, findByTypeNameAll } from "@metro";
 import { ReactNative } from "@metro/common";
 import { definePlugin } from "@plugins";
 import { Contributors,Developers } from "@rain/Developers";
+import React from "react";
 
 import PresenceUpdatedContainer from "./PresenceUpdatedContainer";
 import Settings from "./settings";
@@ -25,30 +27,33 @@ export default definePlugin({
     id: "platformindicators",
     version: "1.0.0",
     async start() {
-        waitForHydration(usePlatformIndicatorSettings);
+        await waitForHydration(usePlatformIndicatorSettings);
 
         const debugLabels = false;
 
         // tabs v2 dm header
         unpatches.push(after("default", findByName("ChannelHeader", false), (args, res) => {
             if (!platformIndicatorSettings.dmTopBar) return;
-            if (!(res.type?.type?.name === "PrivateChannelHeader")) return;
+            if (!(res?.type?.type?.name === "PrivateChannelHeader")) return;
 
-            after("type", res.type, (args, res) => {
-                if (!res.props?.children?.props?.children) return;
+            unpatches.push(after(...getComponentPatchTarget(res, "type"), (args, res) => {
+                if (!res?.props?.children?.props?.children) return;
                 const userId = findInReactTree(res, m => m.props?.user?.id)?.props?.user?.id;
                 if (!userId) return;
 
                 const dmTopBar = res.props?.children;
                 if (!findInReactTree(res, m => m.key === "DMTabsV2Header")) {
-                    if (dmTopBar.props?.children?.props?.children[1]) {
-                        if (typeof dmTopBar.props?.children?.props?.children[1]?.type === "function") {
-                            const titleThing = dmTopBar.props?.children?.props?.children[1];
+                    if (dmTopBar.props?.children?.props?.children?.[1]) {
+                        if (typeof dmTopBar.props?.children?.props?.children?.[1]?.type === "function") {
+                            const titleThing = dmTopBar.props?.children?.props?.children?.[1];
 
-                            const unpatchTV2HdrV2 = after("type", titleThing, (args, res) => {
+                            const unpatchTV2HdrV2 = after(...getComponentPatchTarget(titleThing, "type"), (args, res) => {
                                 unpatchTV2HdrV2();
                                 if (!findInReactTree(res, c => c.key === "DMTabsV2Header-v2")) {
-                                    res.props.children[0].props.children.push(
+                                    const container = res?.props?.children?.[0];
+                                    if (!container?.props) return;
+                                    container.props.children = React.Children.toArray(container.props.children);
+                                    container.props.children.push(
                                         <PresenceUpdatedContainer key="DMTabsV2Header-v2">
                                             {debugLabels ? <Text>DTV2H-v2</Text> : <StatusIcons userId={userId} />}
                                         </PresenceUpdatedContainer>
@@ -57,7 +62,7 @@ export default definePlugin({
                             });
                         } else {
                             const arrowId = findAssetId("arrow-right");
-                            const container1 = findInReactTree(dmTopBar, m => m.props?.children[1]?.props?.source === arrowId);
+                            const container1 = findInReactTree(dmTopBar, m => m.props?.children?.[1]?.props?.source === arrowId);
 
                             container1?.props?.children?.push(<View
                                 key="DMTabsV2Header"
@@ -79,7 +84,7 @@ export default definePlugin({
                 if (topIcons) {
                     topIcons.props.children = <StatusIcons userId={userId} />;
                 }
-            });
+            }, true));
         }));
 
         // User profile content
@@ -87,24 +92,28 @@ export default definePlugin({
 
         unpatches.push(after("type", UserProfileContent, (args, res) => {
             const primaryInfo = findInReactTree(res, c => c?.type?.name === "PrimaryInfo");
-            after("type", primaryInfo, (args, res) => {
+            if (!primaryInfo || !platformIndicatorSettings.profileUsername) return;
+            unpatches.push(after(...getComponentPatchTarget(primaryInfo, "type"), (args, res) => {
                 if (res?.type?.name === "UserProfilePrimaryInfo") {
-                    after("type", res, (args, res) => {
+                    unpatches.push(after(...getComponentPatchTarget(res, "type"), (args, res) => {
                         const displayName = findInReactTree(res, c => c?.type?.name === "DisplayName");
 
-                        after("type", displayName, (args, res) => {
+                        if (!displayName) return;
+                        unpatches.push(after(...getComponentPatchTarget(displayName, "type"), (args, res) => {
                             const userId = args[0]?.user?.id;
-                            if (userId) {
+                            if (userId && res?.props) {
+                                res.props.children = React.Children.toArray(res.props.children);
+                                if (res.props.children.some((child: any) => child?.key === "UserProfileIcons")) return;
                                 res.props.children.push(
                                     <PresenceUpdatedContainer key="UserProfileIcons">
                                         <StatusIcons userId={userId} />
                                     </PresenceUpdatedContainer>
                                 );
                             }
-                        });
-                    });
+                        }, true));
+                    }, true));
                 }
-            });
+            }, true));
         }));
 
         // DisplayName patch
@@ -115,7 +124,7 @@ export default definePlugin({
             if (!res) return;
             if (!user.id) return;
             if (!platformIndicatorSettings.profileUsername) return;
-            res.props?.children?.props?.children[0]?.props?.children?.push(<StatusIcons userId={user.id} />);
+            res.props?.children?.props?.children?.[0]?.props?.children?.push(<StatusIcons userId={user.id} />);
         }));
 
         // Status patch
@@ -131,7 +140,7 @@ export default definePlugin({
         // User row patch
         const rowPatch = (args: any[], res: any) => {
             const user = args[0]?.user;
-            if (!platformIndicatorSettings.userList) return;
+            if (!platformIndicatorSettings.userList || !user?.id || !res?.props) return;
 
             const modifiedStatusIcons = findInReactTree(res?.props?.label, c => c.key === "TabsV2MemberListStatusIconsView");
             if (!modifiedStatusIcons) {
@@ -150,7 +159,7 @@ export default definePlugin({
                     </View>
                 );
                 if (!patchedAvatar && res.props.icon?.type) {
-                    unpatches.push(before("type", res.props.icon.type, args => {
+                    unpatches.push(before(...getComponentPatchTarget(res.props.icon, "type"), args => {
                         if (platformIndicatorSettings.removeDefaultMobile) {
                             args[0].isMobileOnline = false;
                         }
@@ -170,6 +179,8 @@ export default definePlugin({
                 const userId = channel.recipients[0];
                 const textContainer = findInReactTree(res, m => m.props?.children?.[0]?.props?.variant === "redesign/channel-title/semibold");
                 if (textContainer) {
+                    textContainer.props.children = React.Children.toArray(textContainer.props.children);
+                    if (textContainer.props.children.some((child: any) => child?.key === "TabsV2RedesignDMListIcons")) return;
                     textContainer.props.children.push(<View key="TabsV2RedesignDMListIcons" style={{
                         flexDirection: "row"
                     }}>

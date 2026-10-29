@@ -1,4 +1,5 @@
-import { after } from "@api/patcher";
+import { after, instead } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findByNameLazy, findByProps, findByPropsLazy, findByStoreName, findByTypeDisplayName } from "@metro";
 import { ReactNative } from "@metro/common";
 import { ChannelStore, SelectedChannelStore, UserStore } from "@metro/common/stores";
@@ -13,7 +14,8 @@ const Flux = findByProps("useStateFromStores");
 const ChatInputActions = findByTypeDisplayName("ChatInputActions");
 const ChatInputSendButton = findByTypeDisplayName("ChatInputSendButton");
 let hasText = false;
-let sendBtnRef: { setHasText?: (hasText: boolean) => void } | undefined;
+const patchedHandles = new WeakSet<object>();
+let active = false;
 const { Pressable, View, Animated } = ReactNative;
 
 const avatarCollapse = new Animated.Value(0);
@@ -136,21 +138,19 @@ export default definePlugin({
     settings: ChatboxAvatarSettings,
     async start() {
         if (!ChatInputActions?.type || !ChatInputSendButton?.type) return;
+        active = true;
         unpatches.push(
-            after("render", ChatInputSendButton.type, (args, ret) => {
+            after(...getComponentPatchTarget(ChatInputSendButton, "type"), (args, ret) => {
                 setImmediate(() => {
                     setImmediate(() => {
-                        if (args?.[1]?.current) {
-                            sendBtnRef = args[1].current;
-                            const origSetHasText = sendBtnRef?.setHasText;
-                            unpatches.push(() => { if (sendBtnRef && origSetHasText) sendBtnRef.setHasText = origSetHasText; });
-                            if (sendBtnRef) {
-                                sendBtnRef.setHasText = (hasText_: boolean) => {
-                                    hasText = hasText_;
-                                    if (origSetHasText) return origSetHasText.call(sendBtnRef, hasText_);
-                                };
-                            }
-                        }
+                        const handle = (args[0]?.ref ?? args[1])?.current;
+                        if (!active || !handle || patchedHandles.has(handle) || typeof handle.setHasText !== "function") return;
+                        patchedHandles.add(handle);
+                        unpatches.push(() => patchedHandles.delete(handle));
+                        unpatches.push(instead("setHasText", handle, (args, original) => {
+                            hasText = args[0];
+                            return original(...args);
+                        }));
                     });
                 });
             })
@@ -159,8 +159,9 @@ export default definePlugin({
     },
     async eagerStart() {
         if (!ChatInputActions?.type || !ChatInputSendButton?.type) return;
+        active = true;
         unpatches.push(
-            after("render", ChatInputActions.type, (args, ret) => {
+            after(...getComponentPatchTarget(ChatInputActions, "type"), (args, ret) => {
                 return React.createElement(
                     View,
                     { style: { flexDirection: "row", alignItems: "center" } },
@@ -171,7 +172,8 @@ export default definePlugin({
         );
     },
     stop() {
-        for (const unpatch of unpatches) unpatch?.();
-        unpatches.length = 0;
+        active = false;
+        hasText = false;
+        for (const unpatch of unpatches.splice(0).reverse()) unpatch();
     },
 });

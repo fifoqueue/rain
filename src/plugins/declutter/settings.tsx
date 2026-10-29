@@ -1,4 +1,4 @@
-import update from "@api/native/modules/update";
+import { BundleUpdaterManager } from "@api/native/modules";
 import { showToast } from "@api/ui/toasts";
 import { Stack, TableRow, TableRowGroup, TableSwitchRow } from "@metro/common/components";
 import React from "react";
@@ -17,7 +17,7 @@ export default function DeclutterSettings() {
                     subLabel="Apply changes to open lists and profiles."
                     onPress={async () => {
                         try {
-                            await update.nativeReload();
+                            await BundleUpdaterManager.reload();
                         } catch {
                             showToast("Unable to reload Rain");
                         }

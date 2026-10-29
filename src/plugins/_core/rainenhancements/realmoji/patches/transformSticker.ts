@@ -23,21 +23,23 @@ function makeStickerItem(id: string, format: number) {
     }];
 }
 
-export default [
-    before("generate", RowManager.prototype, ([data]) => {
-        if (data.rowType !== 1 || !rainenhancementsSettings.transformSticker) return;
+export default function transformSticker() {
+    return [
+        before("generate", RowManager.prototype, ([data]) => {
+            if (data.rowType !== 1 || !rainenhancementsSettings.transformSticker) return;
 
-        let msg = data.message; // normal
-        if (!msg.content) msg = msg.messageSnapshots?.[0]?.message; // forwarded
-        if (!msg?.content) return;
-        let match = msg.content.match(animatedGifRegex);
-        if (match) msg.stickerItems = makeStickerItem(match[1], 4);
-        else if ((match = msg.content.match(attachmentGifRegex))) msg.stickerItems = makeStickerItem(match[1], 2);
-        else if ((match = msg.content.match(staticStickerRegex))) msg.stickerItems = makeStickerItem(match[1], 1);
+            let msg = data.message; // normal
+            if (!msg.content) msg = msg.messageSnapshots?.[0]?.message; // forwarded
+            if (!msg?.content) return;
+            let match = msg.content.match(animatedGifRegex);
+            if (match) msg.stickerItems = makeStickerItem(match[1], 4);
+            else if ((match = msg.content.match(attachmentGifRegex))) msg.stickerItems = makeStickerItem(match[1], 2);
+            else if ((match = msg.content.match(staticStickerRegex))) msg.stickerItems = makeStickerItem(match[1], 1);
 
-        if (match && msg.stickerItems.length > 0) {
-            msg.content = "";
-            msg.embeds = [];
-        }
-    })
-];
+            if (match && msg.stickerItems.length > 0) {
+                msg.content = "";
+                msg.embeds = [];
+            }
+        })
+    ];
+}

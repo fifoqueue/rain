@@ -28,9 +28,12 @@ export default definePlugin({
     },
     start() {
         // Realmoji
-        patches.push(...transformEmoji);
-        patches.push(...transformSticker);
+        patches.push(...transformEmoji());
+        patches.push(...transformSticker());
         patches.push(patchEmojiActionSheet());
+    },
+    stop() {
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
     },
     settings: settings
 });

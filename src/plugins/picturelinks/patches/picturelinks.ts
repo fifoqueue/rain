@@ -1,4 +1,5 @@
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findByFilePath, findByName, findByProps } from "@metro";
 import { ReactNative } from "@metro/common";
 import { SelectedChannelStore, SelectedGuildStore } from "@metro/common/stores";
@@ -51,7 +52,7 @@ async function openModal(src: string, event: any) {
 
 export function unpatchAvatar() {
     const target = HeaderAvatar?.default?.render ? HeaderAvatar.default : HeaderAvatar;
-    return after(target?.render ? "render" : "default", target, ([{ user, style, guildId }], res) => {
+    return after(...getComponentPatchTarget(HeaderAvatar, "default"), ([{ user, style, guildId }], res) => {
         let ext = "png";
         if (typeof user.guildMemberAvatars?.[guildId] === "string") {
             if (user.guildMemberAvatars?.[guildId].includes("a_")) { ext = "gif"; }
@@ -81,7 +82,7 @@ export function unpatchAvatar() {
 }
 
 export function unpatchBanner() {
-    return after("default", ProfileBanner, ([bannerHeight], res) => {
+    return after(...getComponentPatchTarget(ProfileBanner, "default"), ([bannerHeight], res) => {
         const bannerSource = bannerHeight?.bannerSource;
         if (typeof bannerSource?.uri !== "string" || !res) return res;
 

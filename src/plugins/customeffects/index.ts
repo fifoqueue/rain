@@ -1,5 +1,11 @@
+import { definePlugin } from "@plugins";
+import { Developers } from "@rain/Developers";
 
+import { loadAllEffectData } from "./patches/effects";
+import { patchGetAllProfileEffects, patchGetProfileEffect, patchGetUserProfile } from "./patches/profile";
+import Settings from "./settings";
 
+const patches: (() => void)[] = [];
 export default definePlugin({
     name: "CustomEffects",
     description: "Custom profile effects",
@@ -10,11 +16,13 @@ export default definePlugin({
     async start() {
         await loadAllEffectData();
 
-        patchGetUserProfile();
-        patchGetAllProfileEffects();
-        patchGetProfileEffect();
+        patches.push(patchGetUserProfile());
+        patches.push(patchGetAllProfileEffects());
+        patches.push(patchGetProfileEffect());
     },
 
-    stop() {},
+    stop() {
+        for (const unpatch of patches.splice(0).reverse()) unpatch();
+    },
     settings: Settings
 });

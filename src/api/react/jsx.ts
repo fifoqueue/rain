@@ -1,7 +1,8 @@
 import { after } from "@api/patcher";
 import { findByPropsLazy } from "@metro";
+import type { JSX } from "react";
 
-type Callback = (Component: any, ret: JSX.Element) => JSX.Element;
+type Callback = (Component: any, ret: JSX.Element) => JSX.Element | void;
 const callbacks = new Map<string, Callback[]>();
 
 export const jsxRuntime = findByPropsLazy("jsx", "jsxs");
@@ -9,12 +10,14 @@ export const jsxRuntime = findByPropsLazy("jsx", "jsxs");
 export function onJsxCreate(Component: string, callback: Callback) {
     if (!callbacks.has(Component)) callbacks.set(Component, []);
     callbacks.get(Component)!.push(callback);
+    return () => deleteJsxCreate(Component, callback);
 }
 
 export function deleteJsxCreate(Component: string, callback: Callback) {
     if (!callbacks.has(Component)) return;
     const cbs = callbacks.get(Component)!;
-    cbs.splice(cbs.indexOf(callback), 1);
+    const index = cbs.indexOf(callback);
+    if (index !== -1) cbs.splice(index, 1);
     if (cbs.length === 0) callbacks.delete(Component);
 }
 

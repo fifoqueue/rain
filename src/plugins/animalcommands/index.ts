@@ -48,12 +48,12 @@ const buildCommand = (source: AnimalSource): RainApplicationCommand => ({
     shouldHide: () => !isAnimalEnabled(source.id),
     execute: async (_args, ctx) => {
         if (!isAnimalEnabled(source.id)) {
-            showToast(`${source.name} command is disabled in settings`, 3000);
+            showToast(`${source.name} command is disabled in settings`);
             return;
         }
         const imageSource = getSelectedImageSource(source);
         if (!imageSource) {
-            showToast(`No source configured for ${source.name}`, 3000);
+            showToast(`No source configured for ${source.name}`);
             return;
         }
         try {
@@ -67,7 +67,7 @@ const buildCommand = (source: AnimalSource): RainApplicationCommand => ({
             );
         } catch (error) {
             console.error(`[${source.id}] Failed to fetch image:`, error);
-            showToast(`Failed to fetch ${source.name} image`, 3000);
+            showToast(`Failed to fetch ${source.name} image`);
         }
     },
 });

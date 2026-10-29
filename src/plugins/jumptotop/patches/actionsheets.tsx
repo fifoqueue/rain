@@ -1,5 +1,6 @@
 import { findAssetId } from "@api/assets";
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findInReactTree } from "@lib/utils";
 import { findByName } from "@metro";
 import { ActionSheetRow } from "@metro/common/components";
@@ -91,7 +92,7 @@ export function patchActionSheets() {
             if (!allowedChannelTypes.includes(channel.type)) return;
 
             patches.push(
-                after("type", ret, (_, component) => {
+                after(...getComponentPatchTarget(ret, "type"), (_, component) => {
                     const actions = findActionGroups(component);
                     if (!actions) return;
 

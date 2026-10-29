@@ -1,4 +1,5 @@
 import { after } from "@api/patcher";
+import { getComponentPatchTarget } from "@api/react/patchTarget";
 import { findInReactTree } from "@lib/utils";
 import { findByFilePath } from "@metro";
 
@@ -7,13 +8,13 @@ import ReviewSection from "../components/ReviewSection";
 const SegmentedControlPages = findByFilePath("design/components/SegmentedControl/native/SegmentedControlPages.native.tsx");
 
 export default () =>
-    SegmentedControlPages !== undefined ? after("SegmentedControlPages", SegmentedControlPages, (args, ret) => {
+    SegmentedControlPages !== undefined ? after(...getComponentPatchTarget(SegmentedControlPages, "SegmentedControlPages"), (args, ret) => {
         const profileSections = findInReactTree(
-            ret?.props?.children[0]?.props?.item?.page?.props?.children,
+            ret?.props?.children?.[0]?.props?.item?.page?.props?.children,
             r =>
                 r?.type?.displayName === "View" &&
                 // UserProfileBio still exists even when the user has no bio. Yep.
-                r?.props?.children.findIndex(
+                Array.isArray(r?.props?.children) && r.props.children.findIndex(
                     (i: any) =>
                         i?.type?.name === "UserProfileBio" ||
                         i?.type?.name === "UserProfileAboutMeCard"
