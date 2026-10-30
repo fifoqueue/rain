@@ -20,7 +20,9 @@ export default definePlugin({
     author: [Contributors.palmdevs],
     id: "betterchatbuttons",
     version: "1.1.0",
-    start() {
+    requiresRestart: true,
+    // React caches memo's inner function at mount, so patch before Discord renders.
+    eagerStart() {
         if (active) return;
         const sendTarget = getComponentPatchTarget({ component: ChatInputSendButton }, "component");
         const rightTarget = getComponentPatchTarget({ component: ChatInputRightActions }, "component");
@@ -28,18 +30,20 @@ export default definePlugin({
         active = true;
 
         unpatches.push(before(...sendTarget, ([props, ...rest]) => {
-            const state = useBetterChatButtonsSettings.getState();
+            const state = useBetterChatButtonsSettings();
             return [{ ...props,
                 canSendVoiceMessage: props.canSendVoiceMessage && !state.hide.voice,
                 requireTextContent: state.dismiss.send,
             }, ...rest];
         }));
-        unpatches.push(before(...rightTarget, ([props, ...rest]) => [{
-            ...props,
-            shouldShowGiftButton: props.shouldShowGiftButton && !useBetterChatButtonsSettings.getState().hide.gift,
-        }, ...rest]));
+        unpatches.push(before(...rightTarget, ([props, ...rest]) => {
+            const state = useBetterChatButtonsSettings();
+            return [{ ...props,
+                shouldShowGiftButton: props.shouldShowGiftButton && !state.hide.gift,
+            }, ...rest];
+        }));
         unpatches.push(before(...actionsTarget, ([props, ...rest]) => {
-            const state = useBetterChatButtonsSettings.getState();
+            const state = useBetterChatButtonsSettings();
             return [{ ...props,
                 isAppLauncherEnabled: props.isAppLauncherEnabled && !state.hide.app,
                 canStartThreads: state.show.thread || (props.canStartThreads && !state.hide.thread),

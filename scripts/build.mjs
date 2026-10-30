@@ -79,7 +79,7 @@ const config = {
                                 constModules: {
                                     globals: {
                                         "rain-build-info": {
-                                            version: `"v0.10.4"`,
+                                            version: `"v0.10.5"`,
                                             supportedVersionsAndroid: '344013',
                                             supportedVersionsIOS: '118370'
                                         }
